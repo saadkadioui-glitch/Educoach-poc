@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [{"src": "parent.html", "use": "@vercel/static"}],
+  "routes": [{"src": "/(.*)", "dest": "/parent.html"}]
+}
+```
+
+**3. Push sur GitHub :**
+```
+cd C:\educoach
+git add .
+git commit -m "Dashboard parent"
+git push
