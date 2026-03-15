@@ -434,7 +434,7 @@ async function startDiagnostic(){
   try{
     const resp=await callAPI([{role:'user',content:DIAG_PROMPT(state.studentName)}],ELIO_SYSTEM,2500);
     hideTyping();
-    const clean=resp.replace(/```json|```/g,'').trim();
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();
     const data=JSON.parse(clean);
     state.diagQuestions=data.questions;state.phase='diagnostic';updateDiagCounter();askDiagQ(0);
   }catch(e){hideTyping();console.error(e);addElioMsg(`Oups, bug technique 😅 Recharge la page et réessaie !`)}
@@ -455,7 +455,7 @@ async function processDiagAnswer(answer){
   try{
     const resp=await callAPI([{role:'user',content:EVAL_DIAG(q.question,q.expected,answer)}],ELIO_SYSTEM,200);
     hideTyping();
-    const clean=resp.replace(/```json|```/g,'').trim();const result=JSON.parse(clean);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();const result=JSON.parse(clean);
     const isCorrect=result.correct||result.partial>=0.7;const score=result.correct?1:(result.partial||0);
     const theme=q.theme==='algebre'?'alg':q.theme==='geometrie'?'geo':q.theme==='fonctions'?'fonc':q.theme==='statistiques'?'stat':q.theme;
     state.diagScores[theme]=state.diagScores[theme]||[];state.diagScores[theme].push(score);
@@ -512,7 +512,7 @@ async function sendMessage(){
     state.awaitingAnswer=false;showTyping();
     try{
       const resp=await callAPI([{role:'user',content:EVAL_TRAINING(state.currentExercise.question,state.currentExercise.expected,text)}],ELIO_SYSTEM,300);
-      hideTyping();const clean=resp.replace(/```json|```/g,'').trim();const result=JSON.parse(clean);
+      hideTyping();const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();const result=JSON.parse(clean);
       if(result.correct)state.correctCount++;state.exercicesCount++;document.getElementById('stat-exos').textContent=state.exercicesCount;
       updateTopicScore(state.currentExercise.topic,result.correct);updateStats();
       saveExercise(state.currentExercise,text,result.correct,result.feedback);
