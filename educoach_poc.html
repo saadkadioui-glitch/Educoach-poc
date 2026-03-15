@@ -336,7 +336,7 @@ async function login(){
   const password=document.getElementById('login-password').value;
   if(!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
   const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Connexion...';
-  const{error}=await supabase.auth.signInWithPassword({email,password});
+  const{error}=await sb.auth.signInWithPassword({email,password});
   btn.disabled=false;btn.textContent='On y va →';
   if(error)showAuthMsg('Email ou mot de passe incorrect.','error');
 }
@@ -347,15 +347,15 @@ async function signup(){
   if(!name||!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
   if(password.length<6){showAuthMsg('Mot de passe trop court (6 min).','error');return}
   const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='Création...';
-  const{error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name}}});
+  const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name}}});
   btn.disabled=false;btn.textContent='Créer mon compte →';
   if(error)showAuthMsg('Erreur : '+error.message,'error');
   else showAuthMsg('Compte créé ! Vérifie ton email.','success');
 }
-async function loginGoogle(){await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}})}
-async function logout(){await supabase.auth.signOut();location.reload()}
+async function loginGoogle(){await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}})}
+async function logout(){await sb.auth.signOut();location.reload()}
 
-supabase.auth.onAuthStateChange((event,session)=>{
+sb.auth.onAuthStateChange((event,session)=>{
   if(session?.user){
     currentUser=session.user;
     const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
