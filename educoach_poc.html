@@ -173,7 +173,7 @@
       <ellipse cx="200" cy="152" rx="13" ry="8" fill="#E8907A" opacity="0.35"/>
     </svg>
 
-    <h1 class="auth-title">Salut! moi c'est Elio 👋</h1>
+    <h1 class="auth-title">Yo, moi c'est Elio 👋</h1>
     <p class="auth-sub">Je vais t'aider à cartonner au brevet de maths. Connecte-toi pour qu'on reprenne là où t'as laissé !</p>
 
     <div class="auth-tabs">
@@ -363,7 +363,7 @@ sb.auth.onAuthStateChange((event,session)=>{
     document.getElementById('user-email-display').textContent=name;
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app').classList.add('visible');
-    if(!state.sessionStarted){state.sessionStarted=true;document.getElementById('user-input').disabled=false;document.getElementByI
+    if(!state.sessionStarted){state.sessionStarted=true;document.getElementById("user-input").disabled=false;document.getElementById("send-btn").disabled=false;startTimer();startDiagnostic()}
   }
 });
 
