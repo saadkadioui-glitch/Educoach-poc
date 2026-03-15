@@ -720,7 +720,7 @@ function hideTyping() {
 async function callClaude(userMessage) {
   state.conversationHistory.push({ role: 'user', content: userMessage });
 
-  const response = await fetch('http://localhost:8000/v1/messages', {
+  const response = await fetch('https://educoach-poc-production.up.railway.app/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -871,7 +871,7 @@ function updateHint(hint) {
 async function saveExercise(exercise, studentAnswer, isCorrect, feedback) {
     if (!exercise) return;
     try {
-        await fetch('http://localhost:8000/api/save-exercise', {
+        await fetch('https://educoach-poc-production.up.railway.app/api/save-exercise', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
