@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "educoach_poc.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/educoach_poc.html" }
+  ]
+}
