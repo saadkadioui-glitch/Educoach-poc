@@ -578,6 +578,28 @@ const PLAN_PROMPT=(name,s)=>`Tu es Elio. Diagnostic terminé pour ${name}.
 Résultats : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
 Présente les résultats avec ton ton naturel de grand frère (pas de prof). Annonce le plan du plus faible au plus fort. Dis que tu attaques maintenant. Max 180 mots. Pas de "Excellent" ni de formules pompeux.`;
 
+const EXPLAIN_PROMPT=(name,theme,score)=>`Tu es Elio, coach maths de ${name}.
+Le thème "${theme}" est à ${score}% — c'est un point faible à travailler.
+Fais une mini-leçon en 3 étapes avec ton ton naturel de grand frère :
+1. Explication claire et courte du concept (3-4 lignes max)
+2. Un exemple résolu pas à pas (montre les étapes)
+3. Une question de contrôle simple pour vérifier que c'est compris
+
+Format ta réponse comme ça :
+📖 **Le concept :** [explication]
+✏️ **Exemple :** [exemple résolu]
+❓ **Question :** [question courte]
+
+Reste naturel, pas de jargon de prof. Max 200 mots au total.`;
+
+const EXPLAIN_CHECK_PROMPT=(question,expected,answer)=>`Tu es Elio. L'élève vient de répondre à une question de contrôle.
+Question : ${question}
+Réponse attendue : ${expected}
+Réponse de l'élève : ${answer}
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"feedback":"feedback court et naturel max 40 mots","ready":true/false}
+Si c'est à peu près correct, mets ready:true et correct:true.`;
+
 const EXERCISE_PROMPT=(name,weak,s)=>`Tu es Elio, coach maths de ${name}.
 Points faibles : ${weak.join(', ')}. Scores : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
 Génère UN exercice adapté (thème le plus faible en priorité).
@@ -758,6 +780,7 @@ function startTodaySession(){
   state.sessionExoCount=0;
   state.sessionCorrect=0;
   state.sessionStart=Date.now();
+  state.explainedThemes={};
   document.getElementById('stat-phase').textContent='Entraînement';
   addElioMsg(`C'est parti ! Session de ${state.todayTheme||'maths'} — 10 exercices. Allez ! 🎯`);
   startTraining(state.trainingPlan||computeScores());
@@ -790,13 +813,43 @@ function buildPlanCard(s){
 }
 
 async function startTraining(scores){
-  const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);showTyping();
+  const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
+  const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
+  const firstTheme=weak[0];
+  const firstScore=scores[firstTheme]||0;
+
+  // If score < 50% and not already explained this theme this session, explain first
+  if(firstScore<50 && !state.explainedThemes){state.explainedThemes={};}
+  if(firstScore<50 && state.explainedThemes && !state.explainedThemes[firstTheme]){
+    state.explainedThemes[firstTheme]=true;
+    state.phase='explanation';
+    showTyping();
+    try{
+      const resp=await callAPI([{role:'user',content:EXPLAIN_PROMPT(state.studentName,themeNames[firstTheme],firstScore)}],ELIO_SYSTEM,600);
+      hideTyping();
+      state.pendingExplanationTheme=firstTheme;
+      state.pendingScores=scores;
+      state.awaitingAnswer=true;
+      state.phase='explanation_check';
+      addElioMsg(resp);
+    }catch(e){
+      hideTyping();
+      doStartExercise(scores,weak);
+    }
+    return;
+  }
+  doStartExercise(scores,weak);
+}
+
+async function doStartExercise(scores,weak){
+  state.phase='training';
+  showTyping();
   try{
     const resp=await callAPI([{role:'user',content:EXERCISE_PROMPT(state.studentName,weak,scores)}],ELIO_SYSTEM,400);
     hideTyping();const ex=parseExercise(resp);
-    if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||`Allez, on attaque — voici ton premier exo ! 🎯`,ex);updateHint(ex.hint)}
+    if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||`Allez, premier exo ! 🎯`,ex);updateHint(ex.hint)}
     else addElioMsg(resp);
-  }catch(e){hideTyping();addElioMsg(`C'est parti ! Sur quoi tu veux bosser en premier ?`)}
+  }catch(e){hideTyping();addElioMsg(`C'est parti !`)}
 }
 
 
@@ -942,6 +995,50 @@ async function sendMessage(){
   const input=document.getElementById('user-input');const text=input.value.trim();if(!text)return;
   input.value='';addUserMsg(text);document.getElementById('send-btn').disabled=true;
   if(state.phase==='diagnostic'&&state.awaitingAnswer){state.awaitingAnswer=false;await processDiagAnswer(text);document.getElementById('send-btn').disabled=false;return}
+
+  if(state.phase==='explanation_check'&&state.awaitingAnswer){
+    state.awaitingAnswer=false;showTyping();
+    // Extract the question from last Elio message
+    const msgs=document.getElementById('messages');
+    const elioMsgs=msgs.querySelectorAll('.message.elio .msg-bubble span');
+    const lastMsg=elioMsgs[elioMsgs.length-1]?.textContent||'';
+    const questionMatch=lastMsg.match(/❓[^:]*:\s*(.+)/);
+    const question=questionMatch?questionMatch[1]:'la question de contrôle';
+    try{
+      const resp=await callAPI([{role:'user',content:EXPLAIN_CHECK_PROMPT(question,'réponse correcte sur le concept',text)}],ELIO_SYSTEM,200);
+      hideTyping();
+      const clean=resp.replace(/\`\`\`json|\`\`\`/g,'').replace(/^\s*json\s*/i,'').trim();
+      const result=JSON.parse(clean);
+      const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
+      if(result.ready||result.correct){
+        addElioMsg(result.feedback+' ✅ Bien joué ! On passe aux exercices maintenant.');
+        await sleep(800);
+        state.phase='training';
+        const scores=state.pendingScores||state.trainingPlan||computeScores();
+        const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
+        await doStartExercise(scores,weak);
+      } else {
+        addElioMsg(result.feedback+' Pas grave — voyons ça autrement.');
+        await sleep(600);
+        // Re-explain differently
+        const theme=state.pendingExplanationTheme||'calcul';
+        const score=state.pendingScores?state.pendingScores[theme]:30;
+        showTyping();
+        const resp2=await callAPI([{role:'user',content:`Tu es Elio. Réexplique le thème "${themeNames[theme]}" différemment, avec un autre exemple. L'élève n'a pas compris la première fois. Sois encore plus simple et concret. Max 150 mots.`}],ELIO_SYSTEM,400);
+        hideTyping();
+        state.awaitingAnswer=true;
+        addElioMsg(resp2);
+      }
+    }catch(e){
+      hideTyping();
+      state.phase='training';
+      const scores=state.pendingScores||state.trainingPlan||computeScores();
+      const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
+      await doStartExercise(scores,weak);
+    }
+    document.getElementById('send-btn').disabled=false;
+    return;
+  }
   if(state.phase==='training'&&state.awaitingAnswer&&state.currentExercise){
     state.awaitingAnswer=false;showTyping();
     try{
