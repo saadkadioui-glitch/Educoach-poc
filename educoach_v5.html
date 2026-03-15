@@ -123,6 +123,84 @@
   .btn-resume:hover{transform:translateY(-2px)}
   .screen-warning{background:linear-gradient(135deg,rgba(255,181,71,0.1),rgba(255,181,71,0.05));border:1px solid rgba(255,181,71,0.3);border-radius:12px;padding:12px 16px;display:none;align-items:center;gap:10px;margin-bottom:16px;font-size:13px;color:var(--amber)}
   .screen-warning.show{display:flex}
+
+  .plan-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto;padding:30px 20px}
+  .plan-screen.show{display:flex;flex-direction:column;align-items:center}
+  .plan-container{max-width:600px;width:100%}
+  .plan-header{text-align:center;margin-bottom:32px}
+  .plan-header h2{font-size:24px;font-weight:700;margin-bottom:8px}
+  .plan-header p{color:var(--muted);font-size:14px}
+  .day-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:28px}
+  .day-btn{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif}
+  .day-btn .day-name{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px}
+  .day-btn .day-num{font-size:11px;color:var(--muted)}
+  .day-btn.selected{border-color:var(--green);background:rgba(245,200,66,0.1)}
+  .day-btn.selected .day-name{color:var(--green)}
+  .day-btn.selected .day-num{color:var(--green)}
+  .week-plan{margin-bottom:28px}
+  .week-plan-title{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+  .plan-day-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
+  .plan-day-row.today{border-color:var(--green);background:rgba(245,200,66,0.08)}
+  .plan-day-label{font-size:13px;font-weight:600;width:90px;flex-shrink:0}
+  .plan-day-theme{flex:1;font-size:13px;color:var(--muted)}
+  .plan-day-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+  .badge-focus{background:rgba(245,200,66,0.15);color:var(--green)}
+  .badge-rest{background:var(--surface2);color:var(--muted)}
+  .badge-today{background:var(--green);color:#1C1832}
+  .btn-start-session{width:100%;background:var(--green);color:#1C1832;padding:16px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s;margin-bottom:12px}
+  .btn-start-session:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,200,66,0.3)}
+  .btn-start-session:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px;align-items:start}
+  .score-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+  .score-val{font-size:18px;font-weight:700;margin-bottom:2px}
+  .score-label{font-size:10px;color:var(--muted)}
+  .session-end{display:none;position:fixed;inset:0;background:rgba(28,24,50,0.95);z-index:200;align-items:center;justify-content:center}
+  .session-end.show{display:flex}
+  .session-end-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:420px;width:90%;text-align:center}
+  .session-end-emoji{font-size:56px;margin-bottom:16px}
+  .session-end-title{font-size:22px;font-weight:700;margin-bottom:8px}
+  .session-end-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+  .session-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+  .session-stat{background:var(--surface2);border-radius:10px;padding:12px}
+  .session-stat-val{font-size:22px;font-weight:700;color:var(--green)}
+  .session-stat-label{font-size:11px;color:var(--muted);margin-top:2px}
+  .btn-back-plan{width:100%;background:var(--green);color:#1C1832;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+
+  .dashboard-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto;padding:30px 20px}
+  .dashboard-screen.show{display:block}
+  .dashboard-container{max-width:640px;margin:0 auto}
+  .dashboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+  .dashboard-title{font-size:22px;font-weight:700}
+  .btn-back{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+  .btn-back:hover{border-color:var(--green)}
+  .dash-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+  .dash-section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px}
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .kpi-card{background:var(--surface2);border-radius:12px;padding:14px;text-align:center}
+  .kpi-val{font-size:28px;font-weight:700;color:var(--green);margin-bottom:2px}
+  .kpi-label{font-size:11px;color:var(--muted)}
+  .theme-compare-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .theme-compare-name{font-size:13px;width:110px;flex-shrink:0}
+  .theme-bars{flex:1}
+  .theme-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+  .theme-bar-label{font-size:10px;color:var(--muted);width:40px;flex-shrink:0}
+  .theme-bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+  .theme-bar-fill-init{height:100%;border-radius:4px;background:var(--border);transition:width 0.8s ease}
+  .theme-bar-fill-now{height:100%;border-radius:4px;background:var(--green);transition:width 0.8s ease}
+  .theme-bar-pct{font-size:11px;width:35px;text-align:right;font-family:'JetBrains Mono',monospace}
+  .theme-delta{font-size:12px;font-weight:700;width:44px;text-align:right}
+  .delta-pos{color:var(--green)}
+  .delta-neg{color:var(--red)}
+  .delta-zero{color:var(--muted)}
+  .chart-container{position:relative;height:180px;margin-top:8px}
+  .chart-svg{width:100%;height:100%}
+  .no-data{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+  .session-list{max-height:200px;overflow-y:auto}
+  .session-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+  .session-row:last-child{border-bottom:none}
+  .session-row-date{font-size:12px;color:var(--muted)}
+  .session-row-theme{font-size:13px;font-weight:600}
+  .session-row-score{font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--green)}
   @media(max-width:700px){.main{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -200,6 +278,106 @@
       Continuer avec Google
     </button>
     <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+
+
+<!-- DASHBOARD -->
+<div class="dashboard-screen" id="dashboard-screen">
+  <div class="dashboard-container">
+    <div class="dashboard-header">
+      <div class="dashboard-title">📈 Ma progression</div>
+      <button class="btn-back" onclick="closeDashboard()">← Retour</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="dash-section">
+      <div class="dash-section-title">Vue d'ensemble</div>
+      <div id="dash-level-banner" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:14px"></div>
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-val" id="dash-sessions">0</div>
+          <div class="kpi-label">Sessions complétées</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val" id="dash-exos">0</div>
+          <div class="kpi-label">Exercices faits</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val" id="dash-progress">+0%</div>
+          <div class="kpi-label">Progression globale</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score initial vs actuel -->
+    <div class="dash-section">
+      <div class="dash-section-title">Score initial vs maintenant</div>
+      <div id="theme-compare"></div>
+    </div>
+
+    <!-- Graphique évolution -->
+    <div class="dash-section">
+      <div class="dash-section-title">Évolution de ton score</div>
+      <div class="chart-container">
+        <svg class="chart-svg" id="progress-chart" viewBox="0 0 580 160" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+    <!-- Sessions -->
+    <div class="dash-section">
+      <div class="dash-section-title">Historique des sessions</div>
+      <div class="session-list" id="session-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAN SCREEN -->
+<div class="plan-screen" id="plan-screen">
+  <div class="plan-container">
+    <div class="plan-header">
+      <div style="font-size:40px;margin-bottom:12px">📋</div>
+      <h2 id="plan-title">Ton plan de révision</h2>
+      <p id="plan-subtitle">Choisis tes jours disponibles cette semaine</p>
+    </div>
+
+    <!-- STEP 1: Day picker -->
+    <div id="step-days">
+      <div class="week-plan-title">Quels jours tu peux travailler ?</div>
+      <div class="day-picker" id="day-picker"></div>
+      <button class="btn-start-session" id="btn-confirm-days" onclick="confirmDays()" disabled>
+        Elio génère mon plan →
+      </button>
+    </div>
+
+    <!-- STEP 2: Weekly plan -->
+    <div id="step-plan" style="display:none">
+      <div class="scores-grid" id="scores-grid"></div>
+      <div class="week-plan-title">Ton programme cette semaine</div>
+      <div id="week-plan-rows"></div>
+      <button class="btn-start-session" id="btn-today-session" onclick="startTodaySession()">
+        🎯 Commencer la session du jour
+      </button>
+      <button class="btn-start-session" style="background:var(--surface2);color:var(--text);margin-top:0" onclick="startTodaySession()">
+        Choisir un autre thème
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION END -->
+<div class="session-end" id="session-end">
+  <div class="session-end-card">
+    <div class="session-end-emoji">🏆</div>
+    <h2 class="session-end-title" id="end-title">Session terminée !</h2>
+    <p class="session-end-sub" id="end-sub">T'as bien bossé aujourd'hui.</p>
+    <div class="session-stats">
+      <div class="session-stat"><div class="session-stat-val" id="end-exos">0</div><div class="session-stat-label">Exercices</div></div>
+      <div class="session-stat"><div class="session-stat-val" id="end-score">0%</div><div class="session-stat-label">Score</div></div>
+      <div class="session-stat"><div class="session-stat-val" id="end-time">0 min</div><div class="session-stat-label">Temps</div></div>
+    </div>
+    <button class="btn-back-plan" onclick="backToPlan()">Voir mon plan →</button>
   </div>
 </div>
 
@@ -470,23 +648,140 @@ async function processDiagAnswer(answer){
 
 async function finishDiagnostic(){
   state.phase='plan';document.getElementById('stat-phase').textContent='Plan';document.getElementById('diag-counter').textContent='';state.awaitingAnswer=false;
-  const scores=computeScores();updateAllBars(scores);addElioMsg(`Ok, j'analyse tout ça...`);showTyping();
-  try{
-    const planResp=await callAPI([{role:'user',content:PLAN_PROMPT(state.studentName,scores)}],ELIO_SYSTEM,700);
-    hideTyping();
-    const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
-    div.innerHTML=`${elioSVG()}<div class="msg-bubble">${escH(planResp)}${buildPlanCard(scores)}</div>`;
-    msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
-    state.trainingPlan=scores;document.getElementById('stat-level').textContent=computeLevel(scores);updateStats();
-    await sleep(2000);state.phase='training';document.getElementById('stat-phase').textContent='Entraînement';startTraining(scores);
-  }catch(e){
-    hideTyping();addElioMsg(`C'est bon j'ai tout vu. On attaque l'entraînement ! 💪`);
-    state.phase='training';document.getElementById('stat-phase').textContent='Entraînement';startTraining(computeScores());
+  const scores=computeScores();updateAllBars(scores);
+  state.trainingPlan=scores;state.diagScoresInitial=JSON.parse(JSON.stringify(scores));const lvl=getLevelFromScore(Object.values(scores).reduce((a,b)=>a+b,0)/5);
+  document.getElementById('stat-level').textContent=lvl.emoji+' '+lvl.title;
+  document.getElementById('stat-level').style.color=lvl.color;updateStats();
+  addElioMsg(`Diagnostic terminé ! J'analyse tout ça... Je prépare ton plan perso.`);
+  await sleep(1200);
+  showPlanScreen(scores);
+}
+
+function showPlanScreen(scores){
+  document.getElementById('plan-screen').classList.add('show');
+  document.getElementById('plan-title').textContent = `Super boulot ${state.studentName} ! 💪`;
+  buildDayPicker();
+  buildScoresGrid(scores);
+}
+
+function buildScoresGrid(scores){
+  const themes=[{k:'calcul',l:'Calcul',c:'var(--green)'},{k:'alg',l:'Algèbre',c:'var(--blue)'},{k:'geo',l:'Géométrie',c:'var(--accent)'},{k:'stat',l:'Stats',c:'var(--amber)'},{k:'fonc',l:'Fonctions',c:'#EC4899'}];
+  const grid=document.getElementById('scores-grid');
+  const avgScore=Object.values(scores).reduce((a,b)=>a+b,0)/5;
+  const globalLvl=getLevelFromScore(avgScore);
+  grid.innerHTML=`<div class="score-card" style="grid-column:1/-1;background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.2)">
+    <div class="score-val" style="color:${globalLvl.color}">${globalLvl.emoji} ${globalLvl.title}</div>
+    <div class="score-label">${globalLvl.msg}</div>
+  </div>`+themes.map(t=>{
+    const v=scores[t.k];const lvl=getLevelFromScore(v);
+    return `<div class="score-card"><div class="score-val" style="color:${t.c}">${v}%</div><div class="score-label">${lvl.emoji} ${t.l}</div></div>`;
+  }).join('');
+}
+
+function buildDayPicker(){
+  const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const today=new Date().getDay();
+  const picker=document.getElementById('day-picker');
+  picker.innerHTML=days.map((d,i)=>{
+    const dayIdx=(i+1)%7;
+    const isToday=dayIdx===today;
+    return `<div class="day-btn${isToday?' selected':''}" onclick="toggleDay(this,${i})" data-day="${i}">
+      <div class="day-name">${d}</div>
+      <div class="day-num">${isToday?'Auj.':''}</div>
+    </div>`;
+  }).join('');
+  updateConfirmBtn();
+}
+
+function toggleDay(el,i){
+  el.classList.toggle('selected');
+  updateConfirmBtn();
+}
+
+function updateConfirmBtn(){
+  const selected=document.querySelectorAll('.day-btn.selected').length;
+  document.getElementById('btn-confirm-days').disabled=selected===0;
+  document.getElementById('btn-confirm-days').textContent=selected>0?`Générer mon plan (${selected} jours) →`:'Choisis au moins un jour';
+}
+
+async function confirmDays(){
+  const days=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const selectedDays=Array.from(document.querySelectorAll('.day-btn.selected')).map(el=>days[parseInt(el.dataset.day)]);
+  state.selectedDays=selectedDays;
+  document.getElementById('btn-confirm-days').textContent='Elio prépare ton plan...';
+  document.getElementById('btn-confirm-days').disabled=true;
+
+  const scores=state.trainingPlan||computeScores();
+  const weakThemes=Object.entries(scores).sort((a,b)=>a[1]-b[1]).map(([k])=>k);
+  const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
+
+  // Build plan: distribute weak themes across days
+  const plan={};
+  selectedDays.forEach((day,i)=>{
+    plan[day]=themeNames[weakThemes[i%weakThemes.length]];
+  });
+  state.weekPlan=plan;
+
+  // Show week plan
+  document.getElementById('step-days').style.display='none';
+  document.getElementById('step-plan').style.display='block';
+  document.getElementById('plan-subtitle').textContent='Ton programme personnalisé — basé sur tes points faibles';
+
+  const today=new Date().toLocaleDateString('fr-FR',{weekday:'long'});
+  const todayCap=today.charAt(0).toUpperCase()+today.slice(1);
+  const rows=document.getElementById('week-plan-rows');
+  rows.innerHTML=Object.entries(plan).map(([day,theme])=>{
+    const isToday=day.toLowerCase()===todayCap.toLowerCase()||day===todayCap;
+    return `<div class="plan-day-row${isToday?' today':''}">
+      <div class="plan-day-label">${day}</div>
+      <div class="plan-day-theme">${theme}</div>
+      <div class="plan-day-badge ${isToday?'badge-today':'badge-focus'}">${isToday?"Aujourd'hui":'À faire'}</div>
+    </div>`;
+  }).join('');
+
+  // Check if today is a session day
+  const todayInPlan=Object.keys(plan).some(d=>d.toLowerCase()===todayCap.toLowerCase());
+  const btn=document.getElementById('btn-today-session');
+  if(todayInPlan){
+    const todayTheme=plan[todayCap]||Object.values(plan)[0];
+    btn.textContent=`🎯 Commencer — ${todayTheme}`;
+    state.todayTheme=todayTheme;
+  } else {
+    btn.textContent=`🎯 Commencer une session`;
+    state.todayTheme=Object.values(plan)[0];
   }
 }
 
+function startTodaySession(){
+  document.getElementById('plan-screen').classList.remove('show');
+  state.phase='training';
+  state.sessionExoCount=0;
+  state.sessionCorrect=0;
+  state.sessionStart=Date.now();
+  document.getElementById('stat-phase').textContent='Entraînement';
+  addElioMsg(`C'est parti ! Session de ${state.todayTheme||'maths'} — 10 exercices. Allez ! 🎯`);
+  startTraining(state.trainingPlan||computeScores());
+}
+
+function backToPlan(){
+  document.getElementById('session-end').classList.remove('show');
+  document.getElementById('plan-screen').classList.add('show');
+}
+
 function computeScores(){const avg=(arr)=>arr&&arr.length?Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*100):0;return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),stat:avg(state.diagScores.stat),fonc:avg(state.diagScores.fonc)}}
-function computeLevel(s){const avg=Object.values(s).reduce((a,b)=>a+b,0)/5;return avg>=80?'Expert':avg>=60?'Solide':avg>=40?'En progression':'Débutant'}
+function computeLevel(s){const avg=Object.values(s).reduce((a,b)=>a+b,0)/5;return getLevelFromScore(avg).title}
+
+function getLevelFromScore(score){
+  if(score>=95)return{level:7,emoji:'👑',title:'Grand Maître',color:'#F5C842',msg:"Unstoppable. GG WP."};
+  if(score>=85)return{level:6,emoji:'💎',title:'Légende',color:'#A855F7',msg:"Le brevet tremble devant toi !"};
+  if(score>=71)return{level:5,emoji:'🔥',title:'Élite',color:'#F97316',msg:"Sérieux, t'es en feu !"};
+  if(score>=56)return{level:4,emoji:'🧙',title:'Mage',color:'#F5C842',msg:"Tu maîtrises les sorts de base !"};
+  if(score>=41)return{level:3,emoji:'🛡️',title:'Guerrier',color:'#34D399',msg:"Tu tiens bon, continue !"};
+  if(score>=21)return{level:2,emoji:'⚔️',title:'Apprenti',color:'#60A5FA',msg:"Les bases commencent à rentrer !"};
+  return{level:1,emoji:'🥚',title:'Rookie',color:'#9CA3AF',msg:"T'as posé les bases, c'est un début !"};
+}
+
+function getScoreLevel(score){return getLevelFromScore(score)}
 function buildPlanCard(s){
   const themes=[{k:'calcul',l:'Calcul',c:'var(--green)'},{k:'alg',l:'Algèbre',c:'var(--blue)'},{k:'geo',l:'Géométrie',c:'var(--accent)'},{k:'stat',l:'Stats & Proba',c:'var(--amber)'},{k:'fonc',l:'Fonctions',c:'#EC4899'}].sort((a,b)=>s[a.k]-s[b.k]);
   let h=`<div class="plan-card"><div class="plan-card-title">📋 Ton plan</div>`;
@@ -502,6 +797,145 @@ async function startTraining(scores){
     if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||`Allez, on attaque — voici ton premier exo ! 🎯`,ex);updateHint(ex.hint)}
     else addElioMsg(resp);
   }catch(e){hideTyping();addElioMsg(`C'est parti ! Sur quoi tu veux bosser en premier ?`)}
+}
+
+
+function openDashboard(){
+  document.getElementById('dashboard-screen').classList.add('show');
+  renderDashboard();
+}
+
+function closeDashboard(){
+  document.getElementById('dashboard-screen').classList.remove('show');
+}
+
+function renderDashboard(){
+  const scores=state.trainingPlan||{calcul:0,alg:0,geo:0,stat:0,fonc:0};
+  const initial=state.diagScoresInitial||scores;
+  const history=state.sessionHistory||[];
+  const sessions=state.sessionSessions||0;
+  const totalExos=history.reduce((a,s)=>a+s.exos,0);
+
+  // KPIs
+  document.getElementById('dash-sessions').textContent=sessions;
+  document.getElementById('dash-exos').textContent=totalExos;
+  const avgInitial=Object.values(initial).reduce((a,b)=>a+(b||0),0)/5;
+  const avgNow=Object.values(scores).reduce((a,b)=>a+(b||0),0)/5;
+  const delta=Math.round(avgNow-avgInitial);
+  const deltaEl=document.getElementById('dash-progress');
+  deltaEl.textContent=(delta>=0?'+':'')+delta+'%';
+  deltaEl.style.color=delta>0?'var(--green)':delta<0?'var(--red)':'var(--muted)';
+  // Show current level in dashboard
+  const curLvl=getLevelFromScore(avgNow);
+  const lvlBanner=document.getElementById('dash-level-banner');
+  if(lvlBanner){
+    lvlBanner.innerHTML=`<span style="font-size:28px">${curLvl.emoji}</span> <span style="font-size:16px;font-weight:700;color:${curLvl.color}">${curLvl.title}</span> <span style="font-size:12px;color:var(--muted);margin-left:8px">${curLvl.msg}</span>`;
+  }
+
+  // Theme compare
+  const themes=[{k:'calcul',l:'Calcul'},{k:'alg',l:'Algèbre'},{k:'geo',l:'Géométrie'},{k:'stat',l:'Stats'},{k:'fonc',l:'Fonctions'}];
+  const tc=document.getElementById('theme-compare');
+  tc.innerHTML=themes.map(t=>{
+    const init=Math.round(initial[t.k]||0);
+    const now=Math.round(scores[t.k]||0);
+    const d=now-init;
+    const dClass=d>0?'delta-pos':d<0?'delta-neg':'delta-zero';
+    const dText=(d>0?'+':'')+d+'%';
+    return `<div class="theme-compare-row">
+      <div class="theme-compare-name">${t.l}</div>
+      <div class="theme-bars">
+        <div class="theme-bar-row">
+          <div class="theme-bar-label" style="font-size:9px">Départ</div>
+          <div class="theme-bar-track"><div class="theme-bar-fill-init" style="width:${init}%"></div></div>
+          <div class="theme-bar-pct" style="color:var(--muted)">${init}%</div>
+        </div>
+        <div class="theme-bar-row">
+          <div class="theme-bar-label" style="font-size:9px">Maintenant</div>
+          <div class="theme-bar-track"><div class="theme-bar-fill-now" style="width:${now}%"></div></div>
+          <div class="theme-bar-pct" style="color:var(--green)">${now}%</div>
+        </div>
+      </div>
+      <div class="theme-delta ${dClass}">${dText}</div>
+    </div>`;
+  }).join('');
+
+  // Chart
+  renderProgressChart(history);
+
+  // Session list
+  const sl=document.getElementById('session-list');
+  if(history.length===0){
+    sl.innerHTML='<div class="no-data">Aucune session encore — commence ta première session !</div>';
+  } else {
+    sl.innerHTML=[...history].reverse().map(s=>`
+      <div class="session-row">
+        <div>
+          <div class="session-row-theme">${s.theme}</div>
+          <div class="session-row-date">${s.date}</div>
+        </div>
+        <div class="session-row-score">${s.score}% — ${s.exos} exos</div>
+      </div>`).join('');
+  }
+}
+
+function renderProgressChart(history){
+  const svg=document.getElementById('progress-chart');
+  if(!history||history.length<2){
+    svg.innerHTML='<text x="290" y="90" font-family="system-ui" font-size="13" fill="#7B88A0" text-anchor="middle">Complète 2 sessions pour voir le graphique</text>';
+    return;
+  }
+  const W=580,H=160,pad=40;
+  const scores=history.map(s=>s.score);
+  const minS=0,maxS=100;
+  const pts=scores.map((s,i)=>{
+    const x=pad+(i/(scores.length-1))*(W-pad*2);
+    const y=H-pad-(s-minS)/(maxS-minS)*(H-pad*2);
+    return [Math.round(x),Math.round(y)];
+  });
+
+  let path=`M${pts[0][0]},${pts[0][1]}`;
+  pts.slice(1).forEach(([x,y])=>{ path+=` L${x},${y}`; });
+
+  const dots=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="4" fill="#F5C842"/><text x="${x}" y="${y-10}" font-family="system-ui" font-size="10" fill="#F5C842" text-anchor="middle">${scores[i]}%</text>`).join('');
+  const labels=history.map((s,i)=>{
+    const x=pad+(i/(scores.length-1))*(W-pad*2);
+    return `<text x="${Math.round(x)}" y="${H-8}" font-family="system-ui" font-size="10" fill="#7B88A0" text-anchor="middle">${s.date.slice(0,5)}</text>`;
+  }).join('');
+
+  // Grid lines
+  const grids=[25,50,75,100].map(v=>{
+    const y=Math.round(H-pad-(v-minS)/(maxS-minS)*(H-pad*2));
+    return `<line x1="${pad}" y1="${y}" x2="${W-pad}" y2="${y}" stroke="#2A3347" stroke-width="0.5"/><text x="${pad-4}" y="${y+4}" font-family="system-ui" font-size="9" fill="#7B88A0" text-anchor="end">${v}%</text>`;
+  }).join('');
+
+  svg.innerHTML=grids+`<path d="${path}" fill="none" stroke="#F5C842" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`+dots+labels;
+}
+
+
+function showSessionEnd(){
+  const exos=state.sessionExoCount||0;
+  const correct=state.sessionCorrect||0;
+  const score=exos>0?Math.round((correct/exos)*100):0;
+  const mins=Math.round((Date.now()-(state.sessionStart||Date.now()))/60000);
+  document.getElementById('end-exos').textContent=exos;
+  document.getElementById('end-score').textContent=score+'%';
+  document.getElementById('end-time').textContent=mins+' min';
+  const lvlData=getLevelFromScore(score);
+  const msg=score>=80?'T\'as cartonné aujourd\'hui ! 🔥':score>=60?'Bonne session, continue comme ça !':'Bien joué d\'avoir bossé — ça va venir !';
+  document.getElementById('end-sub').textContent=msg;
+  document.getElementById('end-title').textContent=lvlData.emoji+' '+lvlData.title+' — Session terminée !';
+  // Save session to history
+  if(!state.sessionHistory)state.sessionHistory=[];
+  state.sessionHistory.push({
+    date: new Date().toLocaleDateString('fr-FR'),
+    theme: state.todayTheme||'Maths',
+    exos: exos,
+    score: score,
+    timestamp: Date.now()
+  });
+  document.getElementById('session-end').classList.add('show');
+  state.sessionSessions=(state.sessionSessions||0)+1;
+  state.sessionExoCount=0;state.sessionCorrect=0;if(!state.sessionHistory)state.sessionHistory=[];if(!state.diagScoresInitial)state.diagScoresInitial=JSON.parse(JSON.stringify(state.diagScores));
 }
 
 async function sendMessage(){
@@ -520,7 +954,13 @@ async function sendMessage(){
       fb.className=result.correct?'feedback-correct':'feedback-wrong';fb.style.marginLeft='46px';
       fb.innerHTML=(result.correct?'✅ ':'❌ ')+escH(result.feedback)+'<br><em style="opacity:0.7">'+escH(result.encouragement)+'</em>';
       msgs.appendChild(fb);msgs.scrollTop=msgs.scrollHeight;
-      await sleep(1500);await startTraining(state.trainingPlan||computeScores());
+      state.sessionExoCount=(state.sessionExoCount||0)+1;
+      state.sessionCorrect=(state.sessionCorrect||0)+(result.correct?1:0);
+      if(state.sessionExoCount>=10){
+        await sleep(1000);showSessionEnd();
+      } else {
+        await sleep(1500);await startTraining(state.trainingPlan||computeScores());
+      }
     }catch(e){hideTyping();addElioMsg(`Bonne réponse, on continue !`)}
     document.getElementById('send-btn').disabled=false;return;
   }
