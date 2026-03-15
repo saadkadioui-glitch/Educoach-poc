@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduCoach — Elio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#0E1117;--surface:#161B27;--surface2:#1E2535;--border:#2A3347;
+    --blue:#4C7EFF;--blue-dim:#2A4A99;--green:#1DB954;--green-dark:#17A045;
+    --red:#FF5C6A;--amber:#FFB547;--text:#E8EDF5;--muted:#7B88A0;--accent:#8B5CF6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(29,185,84,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(29,185,84,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  /* AUTH */
+  .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:420px;width:100%;text-align:center}
+  .auth-title{font-size:22px;font-weight:700;margin-bottom:6px}
+  .auth-sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+  .auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:22px}
+  .auth-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+  .auth-tab.active{background:var(--green);color:white}
+  .auth-field{text-align:left;margin-bottom:14px}
+  .auth-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  .auth-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+  .auth-field input:focus{border-color:var(--green)}
+  .btn-auth{width:100%;background:linear-gradient(135deg,var(--green),#17A045);color:white;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px;transition:all 0.2s}
+  .btn-auth:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(29,185,84,0.3)}
+  .btn-auth:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .btn-google{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
+  .btn-google:hover{border-color:var(--green)}
+  .auth-msg{font-size:12px;margin-top:12px;padding:10px;border-radius:8px;display:none}
+  .auth-msg.error{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);color:var(--red);display:block}
+  .auth-msg.success{background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.3);color:var(--green);display:block}
+
+  /* APP */
+  .app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 16px;display:none}
+  .app.visible{display:block}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:18px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-text{font-weight:700;font-size:17px}
+  .logo-sub{font-size:11px;color:var(--muted)}
+  .header-right{display:flex;align-items:center;gap:10px}
+  .timer-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;font-family:'JetBrains Mono',monospace}
+  .timer-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .user-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all 0.2s}
+  .user-badge:hover{border-color:var(--red);color:var(--red)}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .stat-value{font-size:22px;font-weight:700;margin-bottom:2px}
+  .stat-label{font-size:11px;color:var(--muted)}
+  .main{display:grid;grid-template-columns:1fr 280px;gap:16px}
+  .chat-container{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:560px}
+  .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface2)}
+  .elio-status{font-size:12px;color:var(--green)}
+  .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+  .messages::-webkit-scrollbar{width:4px}
+  .messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .message{display:flex;gap:10px;animation:fadeIn 0.3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .message.user{flex-direction:row-reverse}
+  .msg-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:#0f1a14}
+  .message.user .msg-avatar{background:var(--surface2);border:1px solid var(--border);font-size:16px}
+  .msg-bubble{max-width:78%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.65}
+  .message.elio .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-top-left-radius:4px}
+  .message.user .msg-bubble{background:linear-gradient(135deg,var(--blue-dim),var(--accent));border-top-right-radius:4px}
+  .msg-exercise{background:var(--bg);border:1px solid var(--green);border-radius:12px;padding:14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7}
+  .exercise-topic{display:inline-block;background:rgba(29,185,84,0.15);color:var(--green);border-radius:6px;padding:2px 8px;font-size:11px;font-family:'Sora',sans-serif;font-weight:600;margin-bottom:8px}
+  .difficulty-dots{display:flex;gap:3px;margin-top:8px}
+  .difficulty-dots span{width:8px;height:8px;border-radius:50%;background:var(--border)}
+  .difficulty-dots span.active{background:var(--amber)}
+  .plan-card{background:linear-gradient(135deg,rgba(29,185,84,0.08),rgba(23,160,69,0.05));border:1px solid rgba(29,185,84,0.25);border-radius:14px;padding:16px;margin-top:12px}
+  .plan-card-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px}
+  .plan-theme{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .plan-theme-name{font-size:12px}
+  .plan-theme-score{font-size:11px;font-family:'JetBrains Mono',monospace}
+  .plan-bar{height:5px;background:var(--border);border-radius:3px;margin-top:3px;overflow:hidden}
+  .plan-bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
+  .diag-bar{height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
+  .diag-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),#17A045);border-radius:2px;transition:width 0.4s ease}
+  .feedback-correct{background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.3);border-radius:10px;padding:8px 14px;margin-top:8px;font-size:13px;color:var(--green)}
+  .feedback-wrong{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);border-radius:10px;padding:8px 14px;margin-top:8px;font-size:13px;color:var(--red)}
+  .typing{display:flex;gap:4px;padding:4px 0}
+  .typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:0.2s}
+  .typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .input-area{padding:14px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--surface2)}
+  .input-area input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+  .input-area input:focus{border-color:var(--green)}
+  .input-area input::placeholder{color:var(--muted)}
+  .btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;transition:all 0.2s}
+  .btn-primary{background:var(--green);color:white}
+  .btn-primary:hover{background:var(--green-dark);transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+  .sidebar{display:flex;flex-direction:column;gap:14px}
+  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .side-card-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px}
+  .topic-bar{margin-bottom:10px}
+  .topic-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+  .topic-label span:last-child{color:var(--muted)}
+  .bar-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
+  .hint-box{background:rgba(29,185,84,0.08);border:1px solid rgba(29,185,84,0.2);border-radius:10px;padding:12px;font-size:12px;color:#4ade80;line-height:1.5}
+  .hint-icon{font-size:16px;margin-bottom:6px}
+  .btn-pause{width:100%;background:rgba(255,181,71,0.1);border:1px solid rgba(255,181,71,0.3);color:var(--amber);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:600;transition:all 0.2s}
+  .btn-pause:hover{background:rgba(255,181,71,0.2)}
+  .pause-overlay{position:fixed;inset:0;background:rgba(14,17,23,0.96);z-index:100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+  .pause-overlay.show{display:flex}
+  .pause-content{text-align:center}
+  .pause-emoji{font-size:64px;margin-bottom:16px}
+  .pause-title{font-size:28px;font-weight:700;margin-bottom:8px}
+  .pause-text{color:var(--muted);font-size:16px;max-width:400px;line-height:1.6}
+  .pause-countdown{font-size:48px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;margin:20px 0}
+  .btn-resume{background:var(--green);color:white;padding:14px 32px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+  .btn-resume:hover{transform:translateY(-2px)}
+  .screen-warning{background:linear-gradient(135deg,rgba(255,181,71,0.1),rgba(255,181,71,0.05));border:1px solid rgba(255,181,71,0.3);border-radius:12px;padding:12px 16px;display:none;align-items:center;gap:10px;margin-bottom:16px;font-size:13px;color:var(--amber)}
+  .screen-warning.show{display:flex}
+  @media(max-width:700px){.main{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <!-- Elio SVG accueil -->
+    <svg width="110" height="160" viewBox="80 10 200 290" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px">
+      <rect x="80" y="10" width="200" height="280" rx="20" fill="#0f1a14" opacity="0.7"/>
+      <path d="M100 310 L100 235 Q100 200 110 190 L140 180 Q170 175 200 180 L230 190 Q240 200 240 235 L240 310Z" fill="#1DB954"/>
+      <path d="M140 180 Q170 185 200 180 L205 200 Q170 210 135 200Z" fill="#17A045"/>
+      <path d="M140 255 Q170 250 200 255 L198 285 Q170 290 142 285Z" fill="#158f3c"/>
+      <line x1="155" y1="192" x2="148" y2="230" stroke="#0f1a14" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="185" y1="192" x2="192" y2="230" stroke="#0f1a14" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="148" cy="232" r="4" fill="#0f1a14"/>
+      <circle cx="192" cy="232" r="4" fill="#0f1a14"/>
+      <path d="M155 195 Q170 210 185 195" fill="none" stroke="#FFD700" stroke-width="2"/>
+      <circle cx="170" cy="210" r="4" fill="#FFD700"/>
+      <path d="M166 210 L170 218 L174 210" fill="#FFD700"/>
+      <rect x="162" y="172" width="16" height="20" rx="5" fill="#F5C5A3"/>
+      <ellipse cx="122" cy="148" rx="9" ry="11" fill="#F5C5A3"/>
+      <ellipse cx="122" cy="148" rx="5" ry="7" fill="#E8A882"/>
+      <ellipse cx="218" cy="148" rx="9" ry="11" fill="#F5C5A3"/>
+      <ellipse cx="218" cy="148" rx="5" ry="7" fill="#E8A882"/>
+      <ellipse cx="170" cy="138" rx="50" ry="54" fill="#F5C5A3"/>
+      <path d="M122 120 Q124 80 170 75 Q216 80 218 120Z" fill="#1A1A1A"/>
+      <path d="M118 122 Q170 115 222 122 Q225 128 222 132 Q170 125 118 132 Q115 128 118 122Z" fill="#0a0a0a"/>
+      <text x="170" y="108" font-family="system-ui" font-size="11" font-weight="700" fill="#1DB954" text-anchor="middle">EC</text>
+      <circle cx="170" cy="78" r="5" fill="#333"/>
+      <path d="M142 122 Q150 117 160 120" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M180 120 Q190 117 198 122" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="152" cy="135" rx="11" ry="9" fill="white"/>
+      <ellipse cx="188" cy="135" rx="11" ry="9" fill="white"/>
+      <path d="M141 130 Q152 126 163 130" fill="#F5C5A3" opacity="0.9"/>
+      <path d="M177 130 Q188 126 199 130" fill="#F5C5A3" opacity="0.9"/>
+      <circle cx="153" cy="136" r="6.5" fill="#111"/>
+      <circle cx="189" cy="136" r="6.5" fill="#111"/>
+      <circle cx="151" cy="134" r="2.5" fill="#1DB954"/>
+      <circle cx="187" cy="134" r="2.5" fill="#1DB954"/>
+      <circle cx="149" cy="132" r="1.5" fill="white"/>
+      <circle cx="185" cy="132" r="1.5" fill="white"/>
+      <path d="M168 142 Q165 152 163 155 Q170 157 177 155 Q175 152 172 142Z" fill="#E8A882" opacity="0.6"/>
+      <path d="M158 165 Q170 172 181 167" stroke="#C0706A" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M179 166 Q183 163 182 160" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="140" cy="152" rx="13" ry="8" fill="#E8907A" opacity="0.35"/>
+      <ellipse cx="200" cy="152" rx="13" ry="8" fill="#E8907A" opacity="0.35"/>
+    </svg>
+
+    <h1 class="auth-title">Yo, moi c'est Elio 👋</h1>
+    <p class="auth-sub">Je vais t'aider à cartonner au brevet de maths. Connecte-toi pour qu'on reprenne là où t'as laissé !</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Créer un compte</button>
+    </div>
+
+    <div id="form-login">
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="ton@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+      <button class="btn-auth" id="btn-login" onclick="login()">On y va →</button>
+    </div>
+
+    <div id="form-signup" style="display:none">
+      <div class="auth-field"><label>Ton prénom</label><input type="text" id="signup-name" placeholder="Ex: Emma"/></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="ton@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Minimum 6 caractères"/></div>
+      <button class="btn-auth" id="btn-signup" onclick="signup()">Créer mon compte →</button>
+    </div>
+
+    <div class="divider">ou</div>
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div class="pause-overlay" id="pause-overlay">
+  <div class="pause-content">
+    <div class="pause-emoji">☕</div>
+    <h2 class="pause-title">Hé, pause !</h2>
+    <p class="pause-text">25 minutes que t'es dessus — pose l'écran, c'est important pour la mémoire. Reviens dans :</p>
+    <div class="pause-countdown" id="pause-countdown">5:00</div>
+    <button class="btn-resume" onclick="resumeSession()">Je reprends →</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="header">
+    <div class="logo">
+      <!-- Elio mini SVG -->
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;overflow:hidden">
+        <rect width="40" height="40" fill="#0f1a14"/>
+        <path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#1DB954"/>
+        <rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/>
+        <ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/>
+        <path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/>
+        <path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#0a0a0a"/>
+        <ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/>
+        <ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/>
+        <path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/>
+        <path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/>
+        <circle cx="16" cy="19.5" r="2.2" fill="#111"/>
+        <circle cx="26" cy="19.5" r="2.2" fill="#111"/>
+        <circle cx="15" cy="18.8" r="1" fill="#1DB954"/>
+        <circle cx="25" cy="18.8" r="1" fill="#1DB954"/>
+        <circle cx="14.2" cy="18.2" r="0.7" fill="white"/>
+        <circle cx="24.2" cy="18.2" r="0.7" fill="white"/>
+        <path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
+        <ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
+      </svg>
+      <div><div class="logo-text">Elio — EduCoach</div><div class="logo-sub">Brevet Maths • 3e</div></div>
+    </div>
+    <div class="header-right">
+      <div class="timer-badge"><div class="timer-dot"></div><span id="session-timer">00:00</span></div>
+      <div class="user-badge" id="user-badge" onclick="logout()">
+        <span id="user-email-display">—</span>
+        <span style="color:var(--muted)">• Déco</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-warning" id="screen-warning">⚠️ 20 min d'écran — pense à faire une pause bientôt !</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value" id="stat-score" style="color:var(--green)">—</div><div class="stat-label">Score session</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-exos" style="color:var(--blue)">0</div><div class="stat-label">Questions</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-phase" style="color:var(--accent)">Diagnostic</div><div class="stat-label">Phase</div></div>
+    <div class="stat-card"><div class="stat-value" id="stat-level" style="color:var(--amber)">—</div><div class="stat-label">Niveau</div></div>
+  </div>
+
+  <div class="main">
+    <div class="chat-container">
+      <div class="chat-header">
+        <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;overflow:hidden;flex-shrink:0">
+          <rect width="40" height="40" fill="#0f1a14"/>
+          <path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#1DB954"/>
+          <rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/>
+          <ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/>
+          <path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/>
+          <path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#0a0a0a"/>
+          <ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/>
+          <ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/>
+          <path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/>
+          <path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/>
+          <circle cx="16" cy="19.5" r="2.2" fill="#111"/>
+          <circle cx="26" cy="19.5" r="2.2" fill="#111"/>
+          <circle cx="15" cy="18.8" r="1" fill="#1DB954"/>
+          <circle cx="25" cy="18.8" r="1" fill="#1DB954"/>
+          <path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
+          <ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
+        </svg>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Elio</div>
+          <div class="elio-status">● En ligne</div>
+        </div>
+        <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="diag-counter"></div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="user-input" placeholder="Ta réponse..." onkeydown="handleKey(event)" disabled/>
+        <button class="btn btn-primary" id="send-btn" onclick="sendMessage()" disabled>Envoyer</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-card">
+        <div class="side-card-title">📊 Tes stats</div>
+        <div class="topic-bar"><div class="topic-label"><span>Calcul</span><span id="p-calcul">—</span></div><div class="bar-track"><div class="bar-fill" id="b-calcul" style="width:0%;background:var(--green)"></div></div></div>
+        <div class="topic-bar"><div class="topic-label"><span>Algèbre</span><span id="p-alg">—</span></div><div class="bar-track"><div class="bar-fill" id="b-alg" style="width:0%;background:var(--blue)"></div></div></div>
+        <div class="topic-bar"><div class="topic-label"><span>Géométrie</span><span id="p-geo">—</span></div><div class="bar-track"><div class="bar-fill" id="b-geo" style="width:0%;background:var(--accent)"></div></div></div>
+        <div class="topic-bar"><div class="topic-label"><span>Stats & Proba</span><span id="p-stat">—</span></div><div class="bar-track"><div class="bar-fill" id="b-stat" style="width:0%;background:var(--amber)"></div></div></div>
+        <div class="topic-bar"><div class="topic-label"><span>Fonctions</span><span id="p-fonc">—</span></div><div class="bar-track"><div class="bar-fill" id="b-fonc" style="width:0%;background:#EC4899"></div></div></div>
+      </div>
+      <div class="side-card">
+        <div class="side-card-title">💡 Conseil</div>
+        <div class="hint-box" id="hint-box"><div class="hint-icon">✏️</div>Pose tes calculs sur papier avant de répondre — ça aide vraiment à retenir.</div>
+      </div>
+      <button class="btn-pause" onclick="triggerPause()">☕ Pause 5 min</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://sosykwzdarjwliilakgk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvc3lrd3pkYXJqd2xpaWxha2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzE0MDMsImV4cCI6MjA4OTE0NzQwM30.wjWRuf4njfTBGEZcbWq6yUmBPBdOvng9B0KV8I1P9bk';
+const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const BACKEND='https://educoach-poc-production.up.railway.app';
+
+let currentUser=null;
+
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-msg').className='auth-msg';
+}
+function showAuthMsg(msg,type){const el=document.getElementById('auth-msg');el.textContent=msg;el.className='auth-msg '+type}
+
+async function login(){
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value;
+  if(!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Connexion...';
+  const{error}=await supabase.auth.signInWithPassword({email,password});
+  btn.disabled=false;btn.textContent='On y va →';
+  if(error)showAuthMsg('Email ou mot de passe incorrect.','error');
+}
+async function signup(){
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const password=document.getElementById('signup-password').value;
+  if(!name||!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
+  if(password.length<6){showAuthMsg('Mot de passe trop court (6 min).','error');return}
+  const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='Création...';
+  const{error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name}}});
+  btn.disabled=false;btn.textContent='Créer mon compte →';
+  if(error)showAuthMsg('Erreur : '+error.message,'error');
+  else showAuthMsg('Compte créé ! Vérifie ton email.','success');
+}
+async function loginGoogle(){await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}})}
+async function logout(){await supabase.auth.signOut();location.reload()}
+
+supabase.auth.onAuthStateChange((event,session)=>{
+  if(session?.user){
+    currentUser=session.user;
+    const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
+    state.studentName=name;
+    document.getElementById('user-email-display').textContent=name;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    if(!state.sessionStarted){state.sessionStarted=true;startTimer();startDiagnostic()}
+  }
+});
+
+const state={
+  studentName:'',sessionSeconds:0,exercicesCount:0,correctCount:0,
+  phase:'onboarding',diagQuestions:[],diagIndex:0,sessionStarted:false,
+  diagScores:{calcul:[],alg:[],geo:[],stat:[],fonc:[]},
+  conversationHistory:[],currentExercise:null,awaitingAnswer:false,
+  topics:{calcul:null,alg:null,geo:null,stat:null,fonc:null},
+  pauseSeconds:300,pauseInterval:null,sessionInterval:null,warningShown:false,trainingPlan:null
+};
+
+const ELIO_SYSTEM=`Tu es Elio, un ado cool et bienveillant qui aide les élèves de 3e à préparer le brevet de maths. Tu parles comme un grand frère sympa qui s'y connaît — naturel, direct, sans être condescendant ni caricatural. Exemples de ton ton : "Bonne réponse, t'as géré ✅", "Pas tout à fait — mais c'est exactement pour ça qu'on est là", "Allez, un exo sur les équations", "Ok j'ai vu ce qui se passe". Jamais de "Excellent travail !" ou de formules de prof. Réponses courtes (max 120 mots). Suggère de poser les calculs sur papier.`;
+
+const DIAG_PROMPT=(name)=>`Tu es Elio. Crée un diagnostic pour ${name}, élève de 3e préparant le brevet de maths.
+Génère exactement 20 questions couvrant 5 thèmes (4 questions par thème) :
+- calcul : fractions, puissances, racines carrées, priorités
+- algebre : équations, calcul littéral, développement, factorisation
+- geometrie : Pythagore, Thalès, aires, angles
+- statistiques : moyenne, médiane, étendue, probabilités
+- fonctions : tableaux de valeurs, lecture graphique, proportionnalité
+Réponds UNIQUEMENT avec ce JSON valide :
+{"questions":[{"id":1,"theme":"calcul","question":"énoncé","expected":"réponse exacte","difficulty":2},...]}
+Règles : difficulty 1-3, expected = réponse courte exacte, 20 questions.`;
+
+const EVAL_DIAG=(q,e,a)=>`Évalue cette réponse brevet 3e.
+Question: ${q}
+Réponse attendue: ${e}
+Réponse élève: ${a}
+Réponds UNIQUEMENT avec ce JSON: {"correct":true/false,"partial":0.0-1.0,"comment":"feedback max 15 mots, ton cool pas prof"}
+Sois souple sur les équivalents.`;
+
+const PLAN_PROMPT=(name,s)=>`Tu es Elio. Diagnostic terminé pour ${name}.
+Résultats : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
+Présente les résultats avec ton ton naturel de grand frère (pas de prof). Annonce le plan du plus faible au plus fort. Dis que tu attaques maintenant. Max 180 mots. Pas de "Excellent" ni de formules pompeux.`;
+
+const EXERCISE_PROMPT=(name,weak,s)=>`Tu es Elio, coach maths de ${name}.
+Points faibles : ${weak.join(', ')}. Scores : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
+Génère UN exercice adapté (thème le plus faible en priorité).
+Réponds UNIQUEMENT avec ce JSON :
+{"type":"exercice","topic":"nom du thème","difficulty":1-5,"question":"énoncé complet","expected":"réponse exacte","hint":"indice si bloqué"}`;
+
+const EVAL_TRAINING=(q,e,a)=>`Tu es Elio. Évalue la réponse de l'élève avec ton ton cool de grand frère.
+Question: ${q}
+Réponse attendue: ${e}
+Réponse élève: ${a}
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"feedback":"explication max 80 mots ton naturel","encouragement":"phrase motivante courte et naturelle"}`;
+
+function startTimer(){
+  state.sessionInterval=setInterval(()=>{
+    state.sessionSeconds++;
+    const m=Math.floor(state.sessionSeconds/60).toString().padStart(2,'0');
+    const s=(state.sessionSeconds%60).toString().padStart(2,'0');
+    document.getElementById('session-timer').textContent=`${m}:${s}`;
+    if(state.sessionSeconds===1200&&!state.warningShown){document.getElementById('screen-warning').classList.add('show');state.warningShown=true}
+    if(state.sessionSeconds===1500)triggerPause();
+  },1000);
+}
+function triggerPause(){document.getElementById('pause-overlay').classList.add('show');state.pauseSeconds=300;updatePauseCountdown();state.pauseInterval=setInterval(()=>{state.pauseSeconds--;updatePauseCountdown();if(state.pauseSeconds<=0){clearInterval(state.pauseInterval);resumeSession()}},1000)}
+function updatePauseCountdown(){const m=Math.floor(state.pauseSeconds/60).toString().padStart(2,'0');const s=(state.pauseSeconds%60).toString().padStart(2,'0');document.getElementById('pause-countdown').textContent=`${m}:${s}`}
+function resumeSession(){clearInterval(state.pauseInterval);document.getElementById('pause-overlay').classList.remove('show');addElioMsg(`Allez, on reprend ! T'as bien récupéré ? 💪`)}
+
+async function startDiagnostic(){
+  state.phase='generating';document.getElementById('stat-phase').textContent='Diagnostic';
+  addElioMsg(`Yo ${state.studentName} ! Moi c'est Elio 👋 Je vais t'aider à être meilleur en maths. Première étape : 20 questions pour voir où t'en es. Pas de stress — c'est juste pour qu'on parte sur de bonnes bases. Je prépare ça...`);
+  showTyping();
+  try{
+    const resp=await callAPI([{role:'user',content:DIAG_PROMPT(state.studentName)}],ELIO_SYSTEM,2500);
+    hideTyping();
+    const clean=resp.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    state.diagQuestions=data.questions;state.phase='diagnostic';updateDiagCounter();askDiagQ(0);
+  }catch(e){hideTyping();console.error(e);addElioMsg(`Oups, bug technique 😅 Recharge la page et réessaie !`)}
+}
+
+function askDiagQ(i){
+  if(i>=state.diagQuestions.length){finishDiagnostic();return}
+  state.diagIndex=i;const q=state.diagQuestions[i];state.currentExercise=q;state.awaitingAnswer=true;updateDiagCounter();
+  const labels={calcul:'Calcul',alg:'Algèbre',algebre:'Algèbre',geo:'Géométrie',geometrie:'Géométrie',statistiques:'Stats & Proba',stat:'Stats & Proba',fonc:'Fonctions',fonctions:'Fonctions'};
+  const label=labels[q.theme]||q.theme;
+  const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
+  div.innerHTML=`${elioSVG()}<div class="msg-bubble"><div class="msg-exercise"><div class="exercise-topic">${label} • Q${i+1}/20</div><div>${escH(q.question)}</div><div class="diag-bar"><div class="diag-bar-fill" style="width:${(i/20)*100}%"></div></div></div></div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function processDiagAnswer(answer){
+  const q=state.diagQuestions[state.diagIndex];showTyping();
+  try{
+    const resp=await callAPI([{role:'user',content:EVAL_DIAG(q.question,q.expected,answer)}],ELIO_SYSTEM,200);
+    hideTyping();
+    const clean=resp.replace(/```json|```/g,'').trim();const result=JSON.parse(clean);
+    const isCorrect=result.correct||result.partial>=0.7;const score=result.correct?1:(result.partial||0);
+    const theme=q.theme==='algebre'?'alg':q.theme==='geometrie'?'geo':q.theme==='fonctions'?'fonc':q.theme==='statistiques'?'stat':q.theme;
+    state.diagScores[theme]=state.diagScores[theme]||[];state.diagScores[theme].push(score);
+    if(isCorrect)state.correctCount++;state.exercicesCount++;document.getElementById('stat-exos').textContent=state.exercicesCount;
+    updateTopicFromDiag(theme,score);
+    const msgs=document.getElementById('messages');const fb=document.createElement('div');
+    fb.className=isCorrect?'feedback-correct':'feedback-wrong';fb.style.marginLeft='46px';
+    fb.textContent=(isCorrect?'✅ ':'❌ ')+result.comment;msgs.appendChild(fb);msgs.scrollTop=msgs.scrollHeight;
+    await sleep(500);askDiagQ(state.diagIndex+1);
+  }catch(e){hideTyping();console.error(e);askDiagQ(state.diagIndex+1)}
+}
+
+async function finishDiagnostic(){
+  state.phase='plan';document.getElementById('stat-phase').textContent='Plan';document.getElementById('diag-counter').textContent='';state.awaitingAnswer=false;
+  const scores=computeScores();updateAllBars(scores);addElioMsg(`Ok, j'analyse tout ça...`);showTyping();
+  try{
+    const planResp=await callAPI([{role:'user',content:PLAN_PROMPT(state.studentName,scores)}],ELIO_SYSTEM,700);
+    hideTyping();
+    const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
+    div.innerHTML=`${elioSVG()}<div class="msg-bubble">${escH(planResp)}${buildPlanCard(scores)}</div>`;
+    msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+    state.trainingPlan=scores;document.getElementById('stat-level').textContent=computeLevel(scores);updateStats();
+    await sleep(2000);state.phase='training';document.getElementById('stat-phase').textContent='Entraînement';startTraining(scores);
+  }catch(e){
+    hideTyping();addElioMsg(`C'est bon j'ai tout vu. On attaque l'entraînement ! 💪`);
+    state.phase='training';document.getElementById('stat-phase').textContent='Entraînement';startTraining(computeScores());
+  }
+}
+
+function computeScores(){const avg=(arr)=>arr&&arr.length?Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*100):0;return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),stat:avg(state.diagScores.stat),fonc:avg(state.diagScores.fonc)}}
+function computeLevel(s){const avg=Object.values(s).reduce((a,b)=>a+b,0)/5;return avg>=80?'Expert':avg>=60?'Solide':avg>=40?'En progression':'Débutant'}
+function buildPlanCard(s){
+  const themes=[{k:'calcul',l:'Calcul',c:'var(--green)'},{k:'alg',l:'Algèbre',c:'var(--blue)'},{k:'geo',l:'Géométrie',c:'var(--accent)'},{k:'stat',l:'Stats & Proba',c:'var(--amber)'},{k:'fonc',l:'Fonctions',c:'#EC4899'}].sort((a,b)=>s[a.k]-s[b.k]);
+  let h=`<div class="plan-card"><div class="plan-card-title">📋 Ton plan</div>`;
+  themes.forEach(t=>{const v=s[t.k];const e=v>=75?'✅':v>=50?'⚠️':'🔴';h+=`<div class="plan-theme"><div><div class="plan-theme-name">${e} ${t.l}</div><div class="plan-bar"><div class="plan-bar-fill" style="width:${v}%;background:${t.c}"></div></div></div><div class="plan-theme-score">${v}%</div></div>`});
+  return h+`</div>`;
+}
+
+async function startTraining(scores){
+  const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);showTyping();
+  try{
+    const resp=await callAPI([{role:'user',content:EXERCISE_PROMPT(state.studentName,weak,scores)}],ELIO_SYSTEM,400);
+    hideTyping();const ex=parseExercise(resp);
+    if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||`Allez, on attaque — voici ton premier exo ! 🎯`,ex);updateHint(ex.hint)}
+    else addElioMsg(resp);
+  }catch(e){hideTyping();addElioMsg(`C'est parti ! Sur quoi tu veux bosser en premier ?`)}
+}
+
+async function sendMessage(){
+  const input=document.getElementById('user-input');const text=input.value.trim();if(!text)return;
+  input.value='';addUserMsg(text);document.getElementById('send-btn').disabled=true;
+  if(state.phase==='diagnostic'&&state.awaitingAnswer){state.awaitingAnswer=false;await processDiagAnswer(text);document.getElementById('send-btn').disabled=false;return}
+  if(state.phase==='training'&&state.awaitingAnswer&&state.currentExercise){
+    state.awaitingAnswer=false;showTyping();
+    try{
+      const resp=await callAPI([{role:'user',content:EVAL_TRAINING(state.currentExercise.question,state.currentExercise.expected,text)}],ELIO_SYSTEM,300);
+      hideTyping();const clean=resp.replace(/```json|```/g,'').trim();const result=JSON.parse(clean);
+      if(result.correct)state.correctCount++;state.exercicesCount++;document.getElementById('stat-exos').textContent=state.exercicesCount;
+      updateTopicScore(state.currentExercise.topic,result.correct);updateStats();
+      saveExercise(state.currentExercise,text,result.correct,result.feedback);
+      const msgs=document.getElementById('messages');const fb=document.createElement('div');
+      fb.className=result.correct?'feedback-correct':'feedback-wrong';fb.style.marginLeft='46px';
+      fb.innerHTML=(result.correct?'✅ ':'❌ ')+escH(result.feedback)+'<br><em style="opacity:0.7">'+escH(result.encouragement)+'</em>';
+      msgs.appendChild(fb);msgs.scrollTop=msgs.scrollHeight;
+      await sleep(1500);await startTraining(state.trainingPlan||computeScores());
+    }catch(e){hideTyping();addElioMsg(`Bonne réponse, on continue !`)}
+    document.getElementById('send-btn').disabled=false;return;
+  }
+  showTyping();state.conversationHistory.push({role:'user',content:text});
+  const resp=await callAPI(state.conversationHistory,ELIO_SYSTEM,400);
+  hideTyping();state.conversationHistory.push({role:'assistant',content:resp});
+  const ex=parseExercise(resp);
+  if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||'Voici un exo :',ex);updateHint(ex.hint)}
+  else addElioMsg(resp);
+  document.getElementById('send-btn').disabled=false;
+}
+
+function handleKey(e){if(e.key==='Enter')sendMessage()}
+
+async function callAPI(messages,system,maxTokens=1000){
+  const r=await fetch(`${BACKEND}/v1/messages`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})});
+  const d=await r.json();return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+}
+
+function elioSVG(){return`<div class="msg-avatar"><svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="#0f1a14"/><path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#1DB954"/><rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/><ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/><path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/><path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#0a0a0a"/><ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/><ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/><path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/><path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/><circle cx="16" cy="19.5" r="2.2" fill="#111"/><circle cx="26" cy="19.5" r="2.2" fill="#111"/><circle cx="15" cy="18.8" r="1" fill="#1DB954"/><circle cx="25" cy="18.8" r="1" fill="#1DB954"/><circle cx="14.2" cy="18.2" r="0.7" fill="white"/><circle cx="24.2" cy="18.2" r="0.7" fill="white"/><path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/><ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/></svg></div>`}
+
+function addElioMsg(text,ex=null){
+  const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
+  let c=`${elioSVG()}<div class="msg-bubble"><span>${escH(text)}</span>`;
+  if(ex){const dots=Array.from({length:5},(_,i)=>`<span class="${i<(ex.difficulty||1)?'active':''}"></span>`).join('');c+=`<div class="msg-exercise"><div class="exercise-topic">${escH(ex.topic||'')}</div><div>${escH(ex.question||'')}</div><div class="difficulty-dots">${dots}</div></div>`}
+  c+=`</div>`;div.innerHTML=c;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function addUserMsg(text){const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message user';div.innerHTML=`<div class="msg-avatar">👤</div><div class="msg-bubble">${escH(text)}</div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
+function showTyping(){const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';div.id='typing-indicator';div.innerHTML=`${elioSVG()}<div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
+function hideTyping(){const el=document.getElementById('typing-indicator');if(el)el.remove()}
+function updateDiagCounter(){const el=document.getElementById('diag-counter');if(el&&state.phase==='diagnostic')el.textContent=`${state.diagIndex+1}/20`}
+function updateAllBars(s){['calcul','alg','geo','stat','fonc'].forEach(k=>{const p=document.getElementById('p-'+k);const b=document.getElementById('b-'+k);if(p)p.textContent=s[k]+'%';if(b)b.style.width=s[k]+'%';state.topics[k]=s[k]})}
+function updateTopicFromDiag(theme,score){state.topics[theme]=state.topics[theme]||0;const v=Math.min(100,Math.round((state.topics[theme]||0)*0.7+score*100*0.3));state.topics[theme]=v;const p=document.getElementById('p-'+theme);const b=document.getElementById('b-'+theme);if(p)p.textContent=v+'%';if(b)b.style.width=v+'%'}
+const tMap={'calcul':'calcul','algèbre':'alg','géométrie':'geo','statistiques':'stat','probabilités':'stat','fonctions':'fonc'};
+function updateTopicScore(topic,correct){if(!topic)return;const k=Object.keys(tMap).find(t=>topic.toLowerCase().includes(t));if(!k)return;const key=tMap[k];state.topics[key]=correct?Math.min(100,(state.topics[key]||0)+10):Math.max(0,(state.topics[key]||0)-3);const p=document.getElementById('p-'+key);const b=document.getElementById('b-'+key);if(p)p.textContent=state.topics[key]+'%';if(b)b.style.width=state.topics[key]+'%'}
+function updateStats(){if(state.exercicesCount>0){const s=Math.round((state.correctCount/state.exercicesCount)*100);const el=document.getElementById('stat-score');el.textContent=s+'%';el.style.color=s>=70?'var(--green)':s>=40?'var(--amber)':'var(--red)'}}
+function updateHint(hint){if(hint)document.getElementById('hint-box').innerHTML=`<div class="hint-icon">💡</div>${escH(hint)}`}
+function parseExercise(text){try{const m=text.match(/\{[\s\S]*?"type"\s*:\s*"exercice"[\s\S]*?\}/);if(m)return JSON.parse(m[0])}catch(e){}return null}
+function getTextWithoutJson(text){return text.replace(/\{[\s\S]*?"type"\s*:\s*"exercice"[\s\S]*?\}/g,'').trim()}
+async function saveExercise(ex,ans,ok,fb){if(!ex)return;try{await fetch(`${BACKEND}/api/save-exercise`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_name:state.studentName,topic:ex.topic||'général',difficulty:ex.difficulty||1,question:ex.question||'',expected_answer:ex.expected||'',student_answer:ans,is_correct:ok,feedback:fb})})}catch(e){}}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function escH(text){if(!text)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(text));return d.innerHTML}
+</script>
+</body>
+</html>
