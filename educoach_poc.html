@@ -363,7 +363,7 @@ sb.auth.onAuthStateChange((event,session)=>{
     document.getElementById('user-email-display').textContent=name;
     document.getElementById('auth-screen').style.display='none';
     document.getElementById('app').classList.add('visible');
-    if(!state.sessionStarted){state.sessionStarted=true;startTimer();startDiagnostic()}
+    if(!state.sessionStarted){state.sessionStarted=true;document.getElementById('user-input').disabled=false;document.getElementByI
   }
 });
 
