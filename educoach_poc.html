@@ -1003,13 +1003,13 @@ function showSpeech(text, showExercise=null, continueCallback=null){
       document.getElementById('answer-input').focus();
     },100);
   } else if(continueCallback){
-    // Show continue button, disable answer input
     continueEl.style.display='flex';
     document.getElementById('answer-input').disabled=true;
     document.getElementById('btn-send').disabled=true;
     state.pendingContinue=continueCallback;
   } else {
     continueEl.style.display='none';
+    // Free-form speech with no exercise and no continue - keep input as-is
   }
 }
 
@@ -1033,8 +1033,7 @@ function showTypingBubble(){
   exCard.style.display='none';
   continueEl.style.display='none';
   bubble.style.display='block';
-  document.getElementById('answer-input').disabled=true;
-  document.getElementById('btn-send').disabled=true;
+  // Do NOT disable input here - let showSpeech manage it
 }
 
 // ============================================
