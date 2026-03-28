@@ -170,7 +170,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 
 /* SPEECH BUBBLE */
 .speech-area{position:absolute;top:0;left:0;right:0;z-index:20;padding:16px;display:flex;flex-direction:column;align-items:center}
-.speech-bubble{background:rgba(255,255,255,0.96);border-radius:20px;padding:18px 22px;max-width:340px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-bottom:12px}
+.speech-bubble{background:rgba(255,255,255,0.96);border-radius:20px;padding:18px 22px;max-width:340px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-bottom:12px;max-height:55vh;overflow-y:auto}
 .speech-bubble::after{content:'';position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:rgba(255,255,255,0.96)}
 .speech-text{font-size:15px;color:#1E1035;font-weight:500;line-height:1.55;text-align:center}
 .speech-typing{display:flex;gap:5px;justify-content:center;padding:4px 0}
@@ -981,7 +981,7 @@ function showSpeech(text, showExercise=null, continueCallback=null){
   const continueEl=document.getElementById('speech-continue');
   typing.style.display='none';
   textEl.style.display='block';
-  textEl.textContent=text;
+  textEl.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
   bubble.style.display='block';
   if(showExercise){
     exCard.style.display='block';
