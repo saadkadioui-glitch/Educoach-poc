@@ -994,11 +994,14 @@ function showSpeech(text, showExercise=null, continueCallback=null){
     document.getElementById('ex-question').textContent=showExercise.question||'';
     const stars=Array.from({length:5},(_,i)=>`<span>${i<(showExercise.difficulty||1)?'⭐':'☆'}</span>`).join('');
     document.getElementById('ex-stars').innerHTML=stars;
-    // Show answer input for exercise questions
     continueEl.style.display='none';
-    document.getElementById('answer-input').disabled=false;
-    document.getElementById('btn-send').disabled=false;
     state.pendingContinue=null;
+    // Always enable input when exercise is shown
+    setTimeout(()=>{
+      document.getElementById('answer-input').disabled=false;
+      document.getElementById('btn-send').disabled=false;
+      document.getElementById('answer-input').focus();
+    },100);
   } else if(continueCallback){
     // Show continue button, disable answer input
     continueEl.style.display='flex';
