@@ -1100,6 +1100,23 @@ function getTextWithoutJson(text){return text.replace(/\{[\s\S]*?"type"\s*:\s*"e
 async function saveExercise(ex,ans,ok,fb){if(!ex)return;try{await fetch(`${BACKEND}/api/save-exercise`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_name:state.studentName,topic:ex.topic||'général',difficulty:ex.difficulty||1,question:ex.question||'',expected_answer:ex.expected||'',student_answer:ans,is_correct:ok,feedback:fb})})}catch(e){}}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
 function escH(text){if(!text)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(text));return d.innerHTML}
+
+const urlParams=new URLSearchParams(window.location.search);
+const inviteToken=urlParams.get('invite');
+if(inviteToken){
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if(session?.user){
+      try{
+        await fetch('https://educoach-poc-production.up.railway.app/api/student/accept-invite',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({invite_token:inviteToken,user_id:session.user.id})
+        });
+      }catch(e){console.log('invite error:',e)}
+    }
+  });
+}
+
 </script>
 </body>
 </html>
