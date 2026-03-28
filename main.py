@@ -123,7 +123,10 @@ async def create_parent(request: Request):
             },
             json={"user_id": user_id, "email": email, "name": name}
         )
-        parent = r2.json()[0]
+       result = r2.json()
+        if not result:
+            return {"parent_id": None, "status": "error", "detail": str(r2.text)}
+        parent = result[0]
         return {"parent_id": parent["id"], "status": "created"}
 
 @app.post("/api/parent/invite")
