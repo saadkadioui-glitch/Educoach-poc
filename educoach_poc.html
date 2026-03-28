@@ -263,6 +263,10 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .animate-in{animation:fadeIn 0.3s ease forwards}
+.speech-continue{display:flex;justify-content:flex-end;margin-top:10px}
+.btn-continue{background:linear-gradient(135deg,#7C6FCD,#5B4FBF);color:white;border:none;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:6px;transition:all 0.2s;animation:pulse-btn 1.5s infinite}
+.btn-continue:hover{transform:scale(1.05)}
+@keyframes pulse-btn{0%,100%{box-shadow:0 0 0 0 rgba(124,111,205,0.4)}50%{box-shadow:0 0 0 6px rgba(124,111,205,0)}}
 </style>
 </head>
 <body>
@@ -460,6 +464,9 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
         <div class="speech-bubble" id="speech-bubble">
           <div class="speech-typing" id="speech-typing"><span></span><span></span><span></span></div>
           <div class="speech-text" id="speech-text" style="display:none"></div>
+          <div class="speech-continue" id="speech-continue" style="display:none">
+            <button class="btn-continue" onclick="onContinue()">Continuer →</button>
+          </div>
         </div>
         <div class="exercise-card" id="exercise-card" style="display:none">
           <div class="exercise-topic-badge" id="ex-topic"></div>
@@ -966,11 +973,12 @@ function elioShake(){
 // ============================================
 // SPEECH BUBBLE
 // ============================================
-function showSpeech(text, showExercise=null){
+function showSpeech(text, showExercise=null, continueCallback=null){
   const bubble=document.getElementById('speech-bubble');
   const typing=document.getElementById('speech-typing');
   const textEl=document.getElementById('speech-text');
   const exCard=document.getElementById('exercise-card');
+  const continueEl=document.getElementById('speech-continue');
   typing.style.display='none';
   textEl.style.display='block';
   textEl.textContent=text;
@@ -981,8 +989,28 @@ function showSpeech(text, showExercise=null){
     document.getElementById('ex-question').textContent=showExercise.question||'';
     const stars=Array.from({length:5},(_,i)=>`<span>${i<(showExercise.difficulty||1)?'⭐':'☆'}</span>`).join('');
     document.getElementById('ex-stars').innerHTML=stars;
+    // Show answer input for exercise questions
+    continueEl.style.display='none';
+    document.getElementById('answer-input').disabled=false;
+    document.getElementById('btn-send').disabled=false;
+    state.pendingContinue=null;
+  } else if(continueCallback){
+    // Show continue button, disable answer input
+    continueEl.style.display='flex';
+    document.getElementById('answer-input').disabled=true;
+    document.getElementById('btn-send').disabled=true;
+    state.pendingContinue=continueCallback;
   } else {
-    exCard.style.display='none';
+    continueEl.style.display='none';
+  }
+}
+
+function onContinue(){
+  document.getElementById('speech-continue').style.display='none';
+  if(state.pendingContinue){
+    const cb=state.pendingContinue;
+    state.pendingContinue=null;
+    cb();
   }
 }
 
@@ -991,10 +1019,14 @@ function showTypingBubble(){
   const typing=document.getElementById('speech-typing');
   const textEl=document.getElementById('speech-text');
   const exCard=document.getElementById('exercise-card');
+  const continueEl=document.getElementById('speech-continue');
   typing.style.display='flex';
   textEl.style.display='none';
   exCard.style.display='none';
+  continueEl.style.display='none';
   bubble.style.display='block';
+  document.getElementById('answer-input').disabled=true;
+  document.getElementById('btn-send').disabled=true;
 }
 
 // ============================================
@@ -1042,9 +1074,7 @@ Thèmes possibles : calcul, alg, geo, fonc, stat. difficulty 1-3. expected = ré
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const data=JSON.parse(clean);
     state.diagQuestions=data.questions;
-    showSpeech(`Salut ${state.studentName} ! Je suis Elio ⚔️ On commence par 20 questions pour voir ton niveau. Pas de stress — c'est juste pour créer ton plan perso !`);
-    await sleep(2500);
-    askDiagQuestion(0);
+    showSpeech(`Salut ${state.studentName} ! Je suis Elio ⚔️ On commence par 20 questions pour voir ton niveau. Pas de stress — c'est juste pour créer ton plan perso !`, null, ()=>askDiagQuestion(0));
   }catch(e){
     console.error(e);
     showSpeech('Oups, problème technique 😅 Recharge la page !');
@@ -1109,22 +1139,12 @@ Présente les résultats brièvement et annonce le plan (thème le plus faible e
   showTypingBubble();
   try{
     const resp=await callAPI([{role:'user',content:planPrompt}],ELIO_SYSTEM,400);
-    const lvl=getLevelData();
-    showSpeech(resp);
-    document.getElementById('answer-input').disabled=true;
-    document.getElementById('btn-send').disabled=true;
     state.trainingPlan=scores;
     state.todayTheme=getWeakTheme();
     updateHomeScreen();
-    await sleep(4000);
-    // Show session end (diagnostic)
-    showSessionEndScreen(state.diagQuestions.length, 
-      Math.round((state.diagQuestions.filter((_,i)=>{
-        const theme=normalizeTheme(state.diagQuestions[i]?.theme||'');
-        const arr=state.diagScores[theme]||[];
-        return arr[i]>=0.7;
-      }).length/state.diagQuestions.length)*100),
-      50);
+    const correctCount=Object.values(state.diagScores).flat().filter(s=>s>=0.7).length;
+    const scoreVal=Math.round((correctCount/state.diagQuestions.length)*100);
+    showSpeech(resp, null, ()=>showSessionEndScreen(state.diagQuestions.length, scoreVal, 50));
   }catch(e){
     showSpeech('Diagnostic terminé ! Je prépare ton plan...');
     state.trainingPlan=computeScores();
