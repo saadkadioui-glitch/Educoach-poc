@@ -2,206 +2,267 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>EduCoach — Elio</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-  :root {
-    --bg:#1C1832;--surface:#252040;--surface2:#2D2850;--border:#3D3470;
-    --blue:#7C6FCD;--blue-dim:#4A3F8A;--green:#F5C842;--green-dark:#D4A800;
-    --red:#FF5C6A;--amber:#FFB547;--text:#E8EDF5;--muted:#7B88A0;--accent:#5EEAD4;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,200,66,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,200,66,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --bg:#0F0A1E;--surface:#1A1335;--surface2:#241B45;--border:#3D2F6B;
+  --gold:#F5C842;--gold-dark:#D4A800;--purple:#7C6FCD;--teal:#5EEAD4;
+  --red:#FF5C6A;--amber:#FFB547;--text:#EDE9FF;--muted:#8B7EC8;
+  --green:#34D399;--blue:#60A5FA;
+  --medieval-sky1:#0A0520;--medieval-sky2:#1A0A3A;--medieval-ground:#1A0F0A;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:var(--bg);color:var(--text)}
 
-  /* AUTH */
-  .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:30px 20px}
-  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:420px;width:100%;text-align:center;flex-shrink:0}
-  .auth-title{font-size:22px;font-weight:700;margin-bottom:6px}
-  .auth-sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
-  .auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:22px}
-  .auth-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
-  .auth-tab.active{background:var(--green);color:#1C1832}
-  .auth-field{text-align:left;margin-bottom:14px}
-  .auth-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
-  .auth-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
-  .auth-field input:focus{border-color:var(--green)}
-  .btn-auth{width:100%;background:linear-gradient(135deg,var(--green),#D4A800);color:white;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px;transition:all 0.2s}
-  .btn-auth:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,200,66,0.3)}
-  .btn-auth:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-  .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px}
-  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
-  .btn-google{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
-  .btn-google:hover{border-color:var(--green)}
-  .auth-msg{font-size:12px;margin-top:12px;padding:10px;border-radius:8px;display:none}
-  .auth-msg.error{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);color:var(--red);display:block}
-  .auth-msg.success{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:var(--green);display:block}
+/* ===== AUTH ===== */
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:40px 20px;display:flex;flex-direction:column;align-items:center}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:400px;width:100%;text-align:center;margin:0 auto}
+.auth-logo{font-size:48px;margin-bottom:12px}
+.auth-title{font-size:22px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,var(--gold),#FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.auth-tab.active{background:var(--gold);color:#0F0A1E}
+.auth-field{text-align:left;margin-bottom:12px}
+.auth-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.auth-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+.auth-field input:focus{border-color:var(--gold)}
+.btn-auth{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px;transition:all 0.2s}
+.btn-auth:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,200,66,0.3)}
+.btn-auth:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
+.btn-google:hover{border-color:var(--gold)}
+.auth-msg{font-size:12px;margin-top:10px;padding:10px;border-radius:8px;display:none}
+.auth-msg.error{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);color:var(--red);display:block}
+.auth-msg.success{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:var(--gold);display:block}
 
-  /* APP */
-  .app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:24px 16px;display:none}
-  .app.visible{display:block}
-  .header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:18px}
-  .logo{display:flex;align-items:center;gap:12px}
-  .logo-text{font-weight:700;font-size:17px}
-  .logo-sub{font-size:11px;color:var(--muted)}
-  .header-right{display:flex;align-items:center;gap:10px}
-  .timer-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:13px;font-family:'JetBrains Mono',monospace}
-  .timer-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-  .user-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all 0.2s}
-  .user-badge:hover{border-color:var(--red);color:var(--red)}
-  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
-  .stat-value{font-size:22px;font-weight:700;margin-bottom:2px}
-  .stat-label{font-size:11px;color:var(--muted)}
-  .main{display:grid;grid-template-columns:1fr 280px;gap:16px}
-  .chat-container{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:560px}
-  .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface2)}
-  .elio-status{font-size:12px;color:var(--green)}
-  .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
-  .messages::-webkit-scrollbar{width:4px}
-  .messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-  .message{display:flex;gap:10px;animation:fadeIn 0.3s ease}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .message.user{flex-direction:row-reverse}
-  .msg-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:#0f1a14}
-  .message.user .msg-avatar{background:var(--surface2);border:1px solid var(--border);font-size:16px}
-  .msg-bubble{max-width:78%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.65}
-  .message.elio .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-top-left-radius:4px}
-  .message.user .msg-bubble{background:linear-gradient(135deg,var(--blue-dim),var(--accent));border-top-right-radius:4px}
-  .msg-exercise{background:var(--bg);border:1px solid var(--green);border-radius:12px;padding:14px;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7}
-  .exercise-topic{display:inline-block;background:rgba(245,200,66,0.15);color:var(--green);border-radius:6px;padding:2px 8px;font-size:11px;font-family:'Sora',sans-serif;font-weight:600;margin-bottom:8px}
-  .difficulty-dots{display:flex;gap:3px;margin-top:8px}
-  .difficulty-dots span{width:8px;height:8px;border-radius:50%;background:var(--border)}
-  .difficulty-dots span.active{background:var(--amber)}
-  .plan-card{background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(23,160,69,0.05));border:1px solid rgba(245,200,66,0.25);border-radius:14px;padding:16px;margin-top:12px}
-  .plan-card-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px}
-  .plan-theme{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .plan-theme-name{font-size:12px}
-  .plan-theme-score{font-size:11px;font-family:'JetBrains Mono',monospace}
-  .plan-bar{height:5px;background:var(--border);border-radius:3px;margin-top:3px;overflow:hidden}
-  .plan-bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
-  .diag-bar{height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
-  .diag-bar-fill{height:100%;background:linear-gradient(90deg,var(--green),#D4A800);border-radius:2px;transition:width 0.4s ease}
-  .feedback-correct{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);border-radius:10px;padding:8px 14px;margin-top:8px;font-size:13px;color:var(--green)}
-  .feedback-wrong{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);border-radius:10px;padding:8px 14px;margin-top:8px;font-size:13px;color:var(--red)}
-  .typing{display:flex;gap:4px;padding:4px 0}
-  .typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bounce 1.2s infinite}
-  .typing span:nth-child(2){animation-delay:0.2s}
-  .typing span:nth-child(3){animation-delay:0.4s}
-  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-  .input-area{padding:14px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--surface2)}
-  .input-area input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
-  .input-area input:focus{border-color:var(--green)}
-  .input-area input::placeholder{color:var(--muted)}
-  .btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;transition:all 0.2s}
-  .btn-primary{background:var(--green);color:#1C1832}
-  .btn-primary:hover{background:var(--green-dark);transform:translateY(-1px)}
-  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-  .sidebar{display:flex;flex-direction:column;gap:14px}
-  .side-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
-  .side-card-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px}
-  .topic-bar{margin-bottom:10px}
-  .topic-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
-  .topic-label span:last-child{color:var(--muted)}
-  .bar-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
-  .bar-fill{height:100%;border-radius:3px;transition:width 0.6s ease}
-  .hint-box{background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.2);border-radius:10px;padding:12px;font-size:12px;color:#F5C842;line-height:1.5}
-  .hint-icon{font-size:16px;margin-bottom:6px}
-  .btn-pause{width:100%;background:rgba(255,181,71,0.1);border:1px solid rgba(255,181,71,0.3);color:var(--amber);padding:10px;border-radius:10px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;font-weight:600;transition:all 0.2s}
-  .btn-pause:hover{background:rgba(255,181,71,0.2)}
-  .pause-overlay{position:fixed;inset:0;background:rgba(14,17,23,0.96);z-index:100;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px}
-  .pause-overlay.show{display:flex}
-  .pause-content{text-align:center}
-  .pause-emoji{font-size:64px;margin-bottom:16px}
-  .pause-title{font-size:28px;font-weight:700;margin-bottom:8px}
-  .pause-text{color:var(--muted);font-size:16px;max-width:400px;line-height:1.6}
-  .pause-countdown{font-size:48px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace;margin:20px 0}
-  .btn-resume{background:var(--green);color:#1C1832;padding:14px 32px;border-radius:12px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
-  .btn-resume:hover{transform:translateY(-2px)}
-  .screen-warning{background:linear-gradient(135deg,rgba(255,181,71,0.1),rgba(255,181,71,0.05));border:1px solid rgba(255,181,71,0.3);border-radius:12px;padding:12px 16px;display:none;align-items:center;gap:10px;margin-bottom:16px;font-size:13px;color:var(--amber)}
-  .screen-warning.show{display:flex}
+/* ===== PROFILE SETUP ===== */
+.setup-screen{position:fixed;inset:0;background:var(--bg);z-index:250;display:none;overflow-y:auto;padding:30px 20px}
+.setup-screen.show{display:block}
+.setup-container{max-width:480px;margin:0 auto}
+.setup-header{text-align:center;margin-bottom:28px}
+.setup-title{font-size:22px;font-weight:800;margin-bottom:8px;color:var(--gold)}
+.setup-sub{color:var(--muted);font-size:14px;line-height:1.6}
+.setup-step{display:none}
+.setup-step.active{display:block}
+.step-label{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.level-btn{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif}
+.level-btn:hover{border-color:var(--gold)}
+.level-btn.selected{border-color:var(--gold);background:rgba(245,200,66,0.1)}
+.level-btn .level-emoji{font-size:28px;margin-bottom:6px}
+.level-btn .level-name{font-size:13px;font-weight:700;color:var(--text)}
+.level-btn .level-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.chapters-grid{display:grid;grid-template-columns:1fr;gap:0;margin-bottom:24px}
+.chapter-group-title{font-size:12px;font-weight:700;padding:10px 14px 6px;color:var(--gold);text-transform:uppercase;letter-spacing:0.6px;background:var(--surface2);border-radius:8px 8px 0 0;margin-top:10px}
+.chapter-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-top:none;cursor:pointer;transition:background 0.15s}
+.chapter-item:last-child{border-radius:0 0 8px 8px}
+.chapter-item.checked{background:rgba(245,200,66,0.06)}
+.chapter-checkbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:var(--surface2)}
+.chapter-item.checked .chapter-checkbox{background:var(--gold);border-color:var(--gold)}
+.chapter-name{font-size:13px;flex:1;line-height:1.4}
+.chapter-level{font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:10px;flex-shrink:0}
+.btn-setup{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s;margin-top:8px}
+.btn-setup:hover{transform:translateY(-1px)}
+.btn-setup:disabled{opacity:0.4;cursor:not-allowed;transform:none}
 
-  .plan-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto;padding:30px 20px}
-  .plan-screen.show{display:flex;flex-direction:column;align-items:center}
-  .plan-container{max-width:600px;width:100%}
-  .plan-header{text-align:center;margin-bottom:32px}
-  .plan-header h2{font-size:24px;font-weight:700;margin-bottom:8px}
-  .plan-header p{color:var(--muted);font-size:14px}
-  .day-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:28px}
-  .day-btn{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif}
-  .day-btn .day-name{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px}
-  .day-btn .day-num{font-size:11px;color:var(--muted)}
-  .day-btn.selected{border-color:var(--green);background:rgba(245,200,66,0.1)}
-  .day-btn.selected .day-name{color:var(--green)}
-  .day-btn.selected .day-num{color:var(--green)}
-  .week-plan{margin-bottom:28px}
-  .week-plan-title{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
-  .plan-day-row{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
-  .plan-day-row.today{border-color:var(--green);background:rgba(245,200,66,0.08)}
-  .plan-day-label{font-size:13px;font-weight:600;width:90px;flex-shrink:0}
-  .plan-day-theme{flex:1;font-size:13px;color:var(--muted)}
-  .plan-day-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
-  .badge-focus{background:rgba(245,200,66,0.15);color:var(--green)}
-  .badge-rest{background:var(--surface2);color:var(--muted)}
-  .badge-today{background:var(--green);color:#1C1832}
-  .btn-start-session{width:100%;background:var(--green);color:#1C1832;padding:16px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s;margin-bottom:12px}
-  .btn-start-session:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,200,66,0.3)}
-  .btn-start-session:disabled{opacity:0.4;cursor:not-allowed;transform:none}
-  .scores-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px;align-items:start}
-  .score-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
-  .score-val{font-size:18px;font-weight:700;margin-bottom:2px}
-  .score-label{font-size:10px;color:var(--muted)}
-  .session-end{display:none;position:fixed;inset:0;background:rgba(28,24,50,0.95);z-index:200;align-items:center;justify-content:center}
-  .session-end.show{display:flex}
-  .session-end-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:420px;width:90%;text-align:center}
-  .session-end-emoji{font-size:56px;margin-bottom:16px}
-  .session-end-title{font-size:22px;font-weight:700;margin-bottom:8px}
-  .session-end-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
-  .session-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-  .session-stat{background:var(--surface2);border-radius:10px;padding:12px}
-  .session-stat-val{font-size:22px;font-weight:700;color:var(--green)}
-  .session-stat-label{font-size:11px;color:var(--muted);margin-top:2px}
-  .btn-back-plan{width:100%;background:var(--green);color:#1C1832;padding:13px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+/* ===== MAIN APP ===== */
+.app{position:fixed;inset:0;display:none;flex-direction:column}
+.app.visible{display:flex}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;display:none;padding-bottom:70px}
+.screen.active{display:block}
 
-  .dashboard-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:150;overflow-y:auto;padding:30px 20px}
-  .dashboard-screen.show{display:block}
-  .dashboard-container{max-width:640px;margin:0 auto}
-  .dashboard-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
-  .dashboard-title{font-size:22px;font-weight:700}
-  .btn-back{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:10px;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
-  .btn-back:hover{border-color:var(--green)}
-  .dash-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
-  .dash-section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:16px}
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-  .kpi-card{background:var(--surface2);border-radius:12px;padding:14px;text-align:center}
-  .kpi-val{font-size:28px;font-weight:700;color:var(--green);margin-bottom:2px}
-  .kpi-label{font-size:11px;color:var(--muted)}
-  .theme-compare-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-  .theme-compare-name{font-size:13px;width:110px;flex-shrink:0}
-  .theme-bars{flex:1}
-  .theme-bar-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-  .theme-bar-label{font-size:10px;color:var(--muted);width:40px;flex-shrink:0}
-  .theme-bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
-  .theme-bar-fill-init{height:100%;border-radius:4px;background:var(--border);transition:width 0.8s ease}
-  .theme-bar-fill-now{height:100%;border-radius:4px;background:var(--green);transition:width 0.8s ease}
-  .theme-bar-pct{font-size:11px;width:35px;text-align:right;font-family:'JetBrains Mono',monospace}
-  .theme-delta{font-size:12px;font-weight:700;width:44px;text-align:right}
-  .delta-pos{color:var(--green)}
-  .delta-neg{color:var(--red)}
-  .delta-zero{color:var(--muted)}
-  .chart-container{position:relative;height:180px;margin-top:8px}
-  .chart-svg{width:100%;height:100%}
-  .no-data{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
-  .session-list{max-height:200px;overflow-y:auto}
-  .session-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-  .session-row:last-child{border-bottom:none}
-  .session-row-date{font-size:12px;color:var(--muted)}
-  .session-row-theme{font-size:13px;font-weight:600}
-  .session-row-score{font-size:13px;font-family:'JetBrains Mono',monospace;color:var(--green)}
-  @media(max-width:700px){.main{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}}
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{height:65px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 10px;flex-shrink:0;position:relative;z-index:10}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 20px;border-radius:12px;transition:all 0.2s;font-family:'Sora',sans-serif}
+.nav-btn .nav-icon{font-size:22px;transition:transform 0.2s}
+.nav-btn .nav-label{font-size:10px;font-weight:600;color:var(--muted);transition:color 0.2s}
+.nav-btn.active .nav-label{color:var(--gold)}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-btn.active{background:rgba(245,200,66,0.08)}
+
+/* ===== SCREEN 1: HOME ===== */
+.home-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.home-greeting{font-size:20px;font-weight:800}
+.home-greeting span{color:var(--gold)}
+.streak-badge{display:flex;align-items:center;gap:6px;background:rgba(255,181,71,0.15);border:1px solid rgba(255,181,71,0.3);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--amber)}
+
+.xp-card{margin:16px;background:linear-gradient(135deg,#1A1335,#241B45);border:1px solid var(--border);border-radius:20px;padding:20px}
+.xp-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.xp-level-info{display:flex;align-items:center;gap:10px}
+.xp-emoji{font-size:32px}
+.xp-title{font-size:18px;font-weight:800;color:var(--gold)}
+.xp-subtitle{font-size:12px;color:var(--muted)}
+.xp-points{font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.xp-bar-track{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.xp-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width 0.8s ease}
+.xp-bar-labels{display:flex;justify-content:space-between;margin-top:4px}
+.xp-bar-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 16px 16px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stat-val{font-size:20px;font-weight:800;margin-bottom:2px}
+.stat-lbl{font-size:10px;color:var(--muted)}
+
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin:0 16px 10px}
+
+.today-card{margin:0 16px 16px;background:linear-gradient(135deg,rgba(245,200,66,0.12),rgba(212,168,0,0.06));border:1px solid rgba(245,200,66,0.3);border-radius:16px;padding:18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s}
+.today-card:hover{transform:translateY(-2px)}
+.today-card-left .today-label{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px}
+.today-card-left .today-title{font-size:16px;font-weight:800}
+.today-card-left .today-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.btn-play{background:var(--gold);color:#0F0A1E;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.btn-play:hover{transform:scale(1.1)}
+
+.theme-progress{margin:0 16px 16px}
+.theme-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.theme-emoji{font-size:16px;width:24px;text-align:center}
+.theme-info{flex:1}
+.theme-name{font-size:12px;font-weight:600;margin-bottom:3px}
+.theme-bar{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.theme-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.theme-pct{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:36px;text-align:right}
+
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 20px}
+.badge-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center;transition:all 0.2s}
+.badge-card.earned{border-color:var(--gold);background:rgba(245,200,66,0.08)}
+.badge-card.locked{opacity:0.4}
+.badge-emoji{font-size:26px;margin-bottom:4px}
+.badge-name{font-size:9px;color:var(--muted);font-weight:600;line-height:1.3}
+.badge-card.earned .badge-name{color:var(--gold)}
+
+/* ===== SCREEN 2: ELIO MEDIEVAL ===== */
+.elio-screen{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden}
+
+/* Medieval sky background */
+.medieval-bg{position:absolute;inset:0;overflow:hidden;z-index:0}
+.sky{position:absolute;inset:0;background:linear-gradient(180deg,#050210 0%,#0A0520 40%,#1A0A3A 70%,#2A1510 100%)}
+
+/* Stars */
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d,3s) infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--o,0.8)}50%{opacity:0.2}}
+
+/* Castle silhouette */
+.castle{position:absolute;bottom:0;left:0;right:0;height:200px}
+
+/* Torch flames */
+.torch{position:absolute;bottom:120px}
+.torch-left{left:15%}
+.torch-right{right:15%}
+.flame{width:16px;height:24px;background:var(--amber);border-radius:50% 50% 20% 20%;animation:flicker 0.5s infinite alternate;transform-origin:bottom center}
+@keyframes flicker{0%{transform:scaleX(0.9) scaleY(1.1) rotate(-3deg);opacity:0.9}100%{transform:scaleX(1.1) scaleY(0.9) rotate(3deg);opacity:1}}
+
+/* Ground */
+.ground{position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(180deg,#1A0F0A,#0A0605)}
+
+/* ELIO CHARACTER */
+.elio-character{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);z-index:10;animation:elio-breathe 3s ease-in-out infinite;cursor:pointer;transition:transform 0.1s}
+.elio-character.bounce{animation:elio-bounce 0.5s ease-out}
+.elio-character.shake{animation:elio-shake 0.4s ease-out}
+@keyframes elio-breathe{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-6px) scale(1.01)}}
+@keyframes elio-bounce{0%{transform:translateX(-50%) translateY(0)}30%{transform:translateX(-50%) translateY(-30px)}60%{transform:translateX(-50%) translateY(-10px)}100%{transform:translateX(-50%) translateY(0)}}
+@keyframes elio-shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 8px))}75%{transform:translateX(calc(-50% + 8px))}}
+
+/* SPEECH BUBBLE */
+.speech-area{position:absolute;top:0;left:0;right:0;z-index:20;padding:16px;display:flex;flex-direction:column;align-items:center}
+.speech-bubble{background:rgba(255,255,255,0.96);border-radius:20px;padding:18px 22px;max-width:340px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-bottom:12px}
+.speech-bubble::after{content:'';position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:rgba(255,255,255,0.96)}
+.speech-text{font-size:15px;color:#1E1035;font-weight:500;line-height:1.55;text-align:center}
+.speech-typing{display:flex;gap:5px;justify-content:center;padding:4px 0}
+.speech-typing span{width:8px;height:8px;border-radius:50%;background:#7C6FCD;animation:bounce 1.2s infinite}
+.speech-typing span:nth-child(2){animation-delay:0.2s}
+.speech-typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* EXERCISE CARD */
+.exercise-card{background:rgba(255,255,255,0.95);border-radius:16px;padding:16px 20px;max-width:340px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.exercise-topic-badge{display:inline-block;background:rgba(124,111,205,0.15);color:#5B4FBF;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.exercise-question{font-size:15px;color:#1E1035;font-weight:600;line-height:1.5;font-family:'JetBrains Mono',monospace}
+.exercise-stars{display:flex;gap:3px;margin-top:8px}
+.exercise-stars span{font-size:14px}
+
+/* ANSWER AREA */
+.answer-area{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:12px 16px;background:linear-gradient(0deg,rgba(10,5,32,0.98) 0%,transparent 100%)}
+.answer-input-row{display:flex;gap:8px;align-items:center}
+.answer-input{flex:1;background:rgba(255,255,255,0.1);border:2px solid rgba(245,200,66,0.4);border-radius:14px;padding:12px 16px;color:white;font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:all 0.2s;backdrop-filter:blur(10px)}
+.answer-input:focus{border-color:var(--gold);background:rgba(255,255,255,0.15)}
+.answer-input::placeholder{color:rgba(255,255,255,0.4)}
+.btn-send{background:var(--gold);color:#0F0A1E;border:none;border-radius:12px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap;transition:all 0.2s}
+.btn-send:hover{background:var(--gold-dark)}
+.btn-send:disabled{opacity:0.4;cursor:not-allowed}
+
+/* FEEDBACK OVERLAY */
+.feedback-overlay{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;display:none}
+.feedback-overlay.show{display:flex}
+.feedback-correct-bg{background:rgba(52,211,153,0.15);backdrop-filter:blur(4px)}
+.feedback-wrong-bg{background:rgba(255,92,106,0.15);backdrop-filter:blur(4px)}
+.feedback-card{background:white;border-radius:20px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.4)}
+.feedback-emoji{font-size:48px;margin-bottom:12px}
+.feedback-title{font-size:18px;font-weight:800;margin-bottom:8px;color:#1E1035}
+.feedback-text{font-size:13px;color:#475569;line-height:1.5;margin-bottom:16px}
+.btn-next{background:linear-gradient(135deg,#7C6FCD,#5B4FBF);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-next:hover{transform:translateY(-1px)}
+
+/* PROGRESS BAR TOP */
+.progress-top{position:absolute;top:0;left:0;right:0;z-index:25;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.progress-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width 0.4s ease}
+.progress-count{font-size:12px;color:rgba(255,255,255,0.7);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.btn-exit{background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;padding:6px 10px;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-exit:hover{background:rgba(255,255,255,0.2)}
+
+/* SESSION END */
+.session-end-overlay{position:absolute;inset:0;z-index:40;background:rgba(10,5,32,0.95);display:none;align-items:center;justify-content:center;padding:20px}
+.session-end-overlay.show{display:flex}
+.session-end-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:360px;width:100%;text-align:center}
+.session-end-emoji{font-size:56px;margin-bottom:12px}
+.session-end-title{font-size:22px;font-weight:800;color:var(--gold);margin-bottom:6px}
+.session-end-sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+.session-end-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.ses-stat{background:var(--surface2);border-radius:12px;padding:12px}
+.ses-stat-val{font-size:22px;font-weight:800;color:var(--gold)}
+.ses-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+.btn-home{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+
+/* ===== SCREEN 3: COURS ===== */
+.courses-header{padding:20px 16px 12px}
+.courses-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.courses-sub{font-size:13px;color:var(--muted)}
+.course-group{margin:0 16px 16px}
+.course-group-title{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.course-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s}
+.course-card:hover{border-color:var(--gold);transform:translateX(4px)}
+.course-card-left{display:flex;align-items:center;gap:12px}
+.course-icon{font-size:20px;width:36px;height:36px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.course-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.course-level{font-size:11px;color:var(--muted)}
+.course-arrow{color:var(--muted);font-size:16px}
+.course-card.locked{opacity:0.5;cursor:not-allowed}
+.course-card.locked:hover{transform:none;border-color:var(--border)}
+
+/* FICHE DETAIL */
+.fiche-overlay{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;display:none;padding-bottom:30px}
+.fiche-overlay.show{display:block}
+.fiche-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5}
+.btn-back-fiche{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.fiche-header-title{font-size:16px;font-weight:700}
+.fiche-content{padding:20px 16px}
+.fiche-loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.fiche-loading-elio{font-size:48px;animation:elio-breathe 2s infinite;display:block;margin-bottom:12px}
+.fiche-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.fiche-section-title{font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fiche-text{font-size:14px;line-height:1.7;color:var(--text)}
+.fiche-tip{display:flex;gap:10px;padding:10px 14px;background:rgba(245,200,66,0.06);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;margin-bottom:8px}
+.fiche-tip-icon{font-size:16px;flex-shrink:0}
+.fiche-tip-text{font-size:13px;line-height:1.5;color:var(--text)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn 0.3s ease forwards}
 </style>
 </head>
 <body>
@@ -209,69 +270,24 @@
 <!-- AUTH -->
 <div class="auth-screen" id="auth-screen">
   <div class="auth-card">
-    <!-- Elio SVG accueil -->
-    <svg width="110" height="160" viewBox="80 10 200 290" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px">
-      <rect x="80" y="10" width="200" height="280" rx="20" fill="#1C1832" opacity="0.7"/>
-      <path d="M100 310 L100 235 Q100 200 110 190 L140 180 Q170 175 200 180 L230 190 Q240 200 240 235 L240 310Z" fill="#F5C842"/>
-      <path d="M140 180 Q170 185 200 180 L205 200 Q170 210 135 200Z" fill="#D4A800"/>
-      <path d="M140 255 Q170 250 200 255 L198 285 Q170 290 142 285Z" fill="#B8920A"/>
-      <line x1="155" y1="192" x2="148" y2="230" stroke="#0f1a14" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="185" y1="192" x2="192" y2="230" stroke="#0f1a14" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="148" cy="232" r="4" fill="#1C1832"/>
-      <circle cx="192" cy="232" r="4" fill="#1C1832"/>
-      <path d="M155 195 Q170 210 185 195" fill="none" stroke="#FFD700" stroke-width="2"/>
-      <circle cx="170" cy="210" r="4" fill="#FFD700"/>
-      <path d="M166 210 L170 218 L174 210" fill="#FFD700"/>
-      <rect x="162" y="172" width="16" height="20" rx="5" fill="#F5C5A3"/>
-      <ellipse cx="122" cy="148" rx="9" ry="11" fill="#F5C5A3"/>
-      <ellipse cx="122" cy="148" rx="5" ry="7" fill="#E8A882"/>
-      <ellipse cx="218" cy="148" rx="9" ry="11" fill="#F5C5A3"/>
-      <ellipse cx="218" cy="148" rx="5" ry="7" fill="#E8A882"/>
-      <ellipse cx="170" cy="138" rx="50" ry="54" fill="#F5C5A3"/>
-      <path d="M122 120 Q124 80 170 75 Q216 80 218 120Z" fill="#1A1A1A"/>
-      <path d="M118 122 Q170 115 222 122 Q225 128 222 132 Q170 125 118 132 Q115 128 118 122Z" fill="#111028"/>
-      <text x="170" y="108" font-family="system-ui" font-size="11" font-weight="700" fill="#F5C842" text-anchor="middle">EC</text>
-      <circle cx="170" cy="78" r="5" fill="#333"/>
-      <path d="M142 122 Q150 117 160 120" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M180 120 Q190 117 198 122" stroke="#1A1A1A" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <ellipse cx="152" cy="135" rx="11" ry="9" fill="white"/>
-      <ellipse cx="188" cy="135" rx="11" ry="9" fill="white"/>
-      <path d="M141 130 Q152 126 163 130" fill="#F5C5A3" opacity="0.9"/>
-      <path d="M177 130 Q188 126 199 130" fill="#F5C5A3" opacity="0.9"/>
-      <circle cx="153" cy="136" r="6.5" fill="#111"/>
-      <circle cx="189" cy="136" r="6.5" fill="#111"/>
-      <circle cx="151" cy="134" r="2.5" fill="#F5C842"/>
-      <circle cx="187" cy="134" r="2.5" fill="#F5C842"/>
-      <circle cx="149" cy="132" r="1.5" fill="white"/>
-      <circle cx="185" cy="132" r="1.5" fill="white"/>
-      <path d="M168 142 Q165 152 163 155 Q170 157 177 155 Q175 152 172 142Z" fill="#E8A882" opacity="0.6"/>
-      <path d="M158 165 Q170 172 181 167" stroke="#C0706A" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-      <path d="M179 166 Q183 163 182 160" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-      <ellipse cx="140" cy="152" rx="13" ry="8" fill="#E8907A" opacity="0.35"/>
-      <ellipse cx="200" cy="152" rx="13" ry="8" fill="#E8907A" opacity="0.35"/>
-    </svg>
-
-    <h1 class="auth-title">Yo, moi c'est Elio 👋</h1>
-    <p class="auth-sub">Je vais t'aider à cartonner au brevet de maths. Connecte-toi pour qu'on reprenne là où t'as laissé !</p>
-
+    <div class="auth-logo">⚔️</div>
+    <h1 class="auth-title">EduCoach</h1>
+    <p class="auth-sub">Rejoins Elio dans son royaume pour préparer le brevet de maths !</p>
     <div class="auth-tabs">
       <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
-      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Créer un compte</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">S'inscrire</button>
     </div>
-
     <div id="form-login">
       <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="ton@email.com"/></div>
       <div class="auth-field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••"/></div>
-      <button class="btn-auth" id="btn-login" onclick="login()">On y va →</button>
+      <button class="btn-auth" id="btn-login" onclick="login()">Entrer dans le royaume →</button>
     </div>
-
     <div id="form-signup" style="display:none">
       <div class="auth-field"><label>Ton prénom</label><input type="text" id="signup-name" placeholder="Ex: Emma"/></div>
       <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="ton@email.com"/></div>
       <div class="auth-field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Minimum 6 caractères"/></div>
       <button class="btn-auth" id="btn-signup" onclick="signup()">Créer mon compte →</button>
     </div>
-
     <div class="divider">ou</div>
     <button class="btn-google" onclick="loginGoogle()">
       <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
@@ -281,225 +297,422 @@
   </div>
 </div>
 
-
-
-<!-- DASHBOARD -->
-<div class="dashboard-screen" id="dashboard-screen">
-  <div class="dashboard-container">
-    <div class="dashboard-header">
-      <div class="dashboard-title">📈 Ma progression</div>
-      <button class="btn-back" onclick="closeDashboard()">← Retour</button>
+<!-- PROFILE SETUP -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-container">
+    <div class="setup-header">
+      <div style="font-size:48px;margin-bottom:12px">⚔️</div>
+      <div class="setup-title">Bienvenue dans le Royaume !</div>
+      <div class="setup-sub">Avant de commencer, Elio a besoin de te connaître pour créer ton entraînement parfait.</div>
     </div>
 
-    <!-- KPIs -->
-    <div class="dash-section">
-      <div class="dash-section-title">Vue d'ensemble</div>
-      <div id="dash-level-banner" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:14px"></div>
-      <div class="kpi-row">
-        <div class="kpi-card">
-          <div class="kpi-val" id="dash-sessions">0</div>
-          <div class="kpi-label">Sessions complétées</div>
+    <!-- Step 1: Niveau -->
+    <div class="setup-step active" id="setup-step-1">
+      <div class="step-label">Étape 1/2 — Ton niveau scolaire</div>
+      <div class="level-grid">
+        <div class="level-btn" onclick="selectLevel('5e')" id="lvl-5e">
+          <div class="level-emoji">🌱</div>
+          <div class="level-name">5e</div>
+          <div class="level-desc">Je commence</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-val" id="dash-exos">0</div>
-          <div class="kpi-label">Exercices faits</div>
+        <div class="level-btn" onclick="selectLevel('4e')" id="lvl-4e">
+          <div class="level-emoji">⚔️</div>
+          <div class="level-name">4e</div>
+          <div class="level-desc">En cours</div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-val" id="dash-progress">+0%</div>
-          <div class="kpi-label">Progression globale</div>
+        <div class="level-btn" onclick="selectLevel('3e')" id="lvl-3e">
+          <div class="level-emoji">🏆</div>
+          <div class="level-name">3e</div>
+          <div class="level-desc">Brevet cette année</div>
         </div>
       </div>
+      <button class="btn-setup" id="btn-next-level" onclick="goToChapters()" disabled>Continuer →</button>
     </div>
 
-    <!-- Score initial vs actuel -->
-    <div class="dash-section">
-      <div class="dash-section-title">Score initial vs maintenant</div>
-      <div id="theme-compare"></div>
-    </div>
-
-    <!-- Graphique évolution -->
-    <div class="dash-section">
-      <div class="dash-section-title">Évolution de ton score</div>
-      <div class="chart-container">
-        <svg class="chart-svg" id="progress-chart" viewBox="0 0 580 160" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
-    </div>
-
-    <!-- Sessions -->
-    <div class="dash-section">
-      <div class="dash-section-title">Historique des sessions</div>
-      <div class="session-list" id="session-list"></div>
+    <!-- Step 2: Chapitres -->
+    <div class="setup-step" id="setup-step-2">
+      <div class="step-label">Étape 2/2 — Chapitres déjà vus en classe</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Décoche les chapitres que tu n'as pas encore étudiés.</p>
+      <div id="chapters-list"></div>
+      <button class="btn-setup" id="btn-start-diag" onclick="finishSetup()">C'est parti avec Elio ! ⚔️</button>
     </div>
   </div>
 </div>
 
-<!-- PLAN SCREEN -->
-<div class="plan-screen" id="plan-screen">
-  <div class="plan-container">
-    <div class="plan-header">
-      <div style="font-size:40px;margin-bottom:12px">📋</div>
-      <h2 id="plan-title">Ton plan de révision</h2>
-      <p id="plan-subtitle">Choisis tes jours disponibles cette semaine</p>
-    </div>
-
-    <!-- STEP 1: Day picker -->
-    <div id="step-days">
-      <div class="week-plan-title">Quels jours tu peux travailler ?</div>
-      <div class="day-picker" id="day-picker"></div>
-      <button class="btn-start-session" id="btn-confirm-days" onclick="confirmDays()" disabled>
-        Elio génère mon plan →
-      </button>
-    </div>
-
-    <!-- STEP 2: Weekly plan -->
-    <div id="step-plan" style="display:none">
-      <div class="scores-grid" id="scores-grid"></div>
-      <div class="week-plan-title">Ton programme cette semaine</div>
-      <div id="week-plan-rows"></div>
-      <button class="btn-start-session" id="btn-today-session" onclick="startTodaySession()">
-        🎯 Commencer la session du jour
-      </button>
-      <button class="btn-start-session" style="background:var(--surface2);color:var(--text);margin-top:0" onclick="startTodaySession()">
-        Choisir un autre thème
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- SESSION END -->
-<div class="session-end" id="session-end">
-  <div class="session-end-card">
-    <div class="session-end-emoji">🏆</div>
-    <h2 class="session-end-title" id="end-title">Session terminée !</h2>
-    <p class="session-end-sub" id="end-sub">T'as bien bossé aujourd'hui.</p>
-    <div class="session-stats">
-      <div class="session-stat"><div class="session-stat-val" id="end-exos">0</div><div class="session-stat-label">Exercices</div></div>
-      <div class="session-stat"><div class="session-stat-val" id="end-score">0%</div><div class="session-stat-label">Score</div></div>
-      <div class="session-stat"><div class="session-stat-val" id="end-time">0 min</div><div class="session-stat-label">Temps</div></div>
-    </div>
-    <button class="btn-back-plan" onclick="backToPlan()">Voir mon plan →</button>
-  </div>
-</div>
-
-<!-- PAUSE -->
-<div class="pause-overlay" id="pause-overlay">
-  <div class="pause-content">
-    <div class="pause-emoji">☕</div>
-    <h2 class="pause-title">Hé, pause !</h2>
-    <p class="pause-text">25 minutes que t'es dessus — pose l'écran, c'est important pour la mémoire. Reviens dans :</p>
-    <div class="pause-countdown" id="pause-countdown">5:00</div>
-    <button class="btn-resume" onclick="resumeSession()">Je reprends →</button>
-  </div>
-</div>
-
+<!-- MAIN APP -->
 <div class="app" id="app">
-  <div class="header">
-    <div class="logo">
-      <!-- Elio mini SVG -->
-      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;overflow:hidden">
-        <rect width="40" height="40" fill="#1C1832"/>
-        <path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#F5C842"/>
-        <rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/>
-        <ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/>
-        <path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/>
-        <path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#111028"/>
-        <ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/>
-        <ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/>
-        <path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/>
-        <path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/>
-        <circle cx="16" cy="19.5" r="2.2" fill="#111"/>
-        <circle cx="26" cy="19.5" r="2.2" fill="#111"/>
-        <circle cx="15" cy="18.8" r="1" fill="#F5C842"/>
-        <circle cx="25" cy="18.8" r="1" fill="#F5C842"/>
-        <circle cx="14.2" cy="18.2" r="0.7" fill="white"/>
-        <circle cx="24.2" cy="18.2" r="0.7" fill="white"/>
-        <path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-        <path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/>
-        <ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
-        <ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
-      </svg>
-      <div><div class="logo-text">Elio — EduCoach</div><div class="logo-sub">Brevet Maths • 3e</div></div>
+
+  <!-- SCREEN 1: HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="home-header">
+      <div class="home-greeting">Salut <span id="home-name">—</span> !</div>
+      <div class="streak-badge">🔥 <span id="home-streak">1</span> jour</div>
     </div>
-    <div class="header-right">
-      <div class="timer-badge"><div class="timer-dot"></div><span id="session-timer">00:00</span></div>
-      <div class="user-badge" id="user-badge" onclick="logout()">
-        <span id="user-email-display">—</span>
-        <span style="color:var(--muted)">• Déco</span>
-      </div>
-    </div>
-  </div>
 
-  <div class="screen-warning" id="screen-warning">⚠️ 20 min d'écran — pense à faire une pause bientôt !</div>
-
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-value" id="stat-score" style="color:var(--green)">—</div><div class="stat-label">Score session</div></div>
-    <div class="stat-card"><div class="stat-value" id="stat-exos" style="color:var(--blue)">0</div><div class="stat-label">Questions</div></div>
-    <div class="stat-card"><div class="stat-value" id="stat-phase" style="color:var(--accent)">Diagnostic</div><div class="stat-label">Phase</div></div>
-    <div class="stat-card"><div class="stat-value" id="stat-level" style="color:var(--amber)">—</div><div class="stat-label">Niveau</div></div>
-  </div>
-
-  <div class="main">
-    <div class="chat-container">
-      <div class="chat-header">
-        <svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="border-radius:50%;overflow:hidden;flex-shrink:0">
-          <rect width="40" height="40" fill="#1C1832"/>
-          <path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#F5C842"/>
-          <rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/>
-          <ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/>
-          <path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/>
-          <path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#111028"/>
-          <ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/>
-          <ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/>
-          <path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/>
-          <path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/>
-          <circle cx="16" cy="19.5" r="2.2" fill="#111"/>
-          <circle cx="26" cy="19.5" r="2.2" fill="#111"/>
-          <circle cx="15" cy="18.8" r="1" fill="#F5C842"/>
-          <circle cx="25" cy="18.8" r="1" fill="#F5C842"/>
-          <path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          <path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/>
-          <ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
-          <ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/>
-        </svg>
-        <div>
-          <div style="font-size:14px;font-weight:700;">Elio</div>
-          <div class="elio-status">● En ligne</div>
+    <!-- XP Card -->
+    <div class="xp-card">
+      <div class="xp-level-row">
+        <div class="xp-level-info">
+          <div class="xp-emoji" id="xp-emoji">🥚</div>
+          <div>
+            <div class="xp-title" id="xp-title">Rookie</div>
+            <div class="xp-subtitle">Niveau <span id="xp-level-num">1</span></div>
+          </div>
         </div>
-        <div style="margin-left:auto;font-size:12px;color:var(--muted)" id="diag-counter"></div>
+        <div class="xp-points"><span id="xp-current">0</span> / <span id="xp-next">100</span> XP</div>
       </div>
-      <div class="messages" id="messages"></div>
-      <div class="input-area">
-        <input type="text" id="user-input" placeholder="Ta réponse..." onkeydown="handleKey(event)" disabled/>
-        <button class="btn btn-primary" id="send-btn" onclick="sendMessage()" disabled>Envoyer</button>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+      </div>
+      <div class="xp-bar-labels">
+        <span class="xp-bar-label">0</span>
+        <span class="xp-bar-label" id="xp-bar-next">100 XP</span>
       </div>
     </div>
 
-    <div class="sidebar">
-      <div class="side-card">
-        <div class="side-card-title">📊 Tes stats</div>
-        <div class="topic-bar"><div class="topic-label"><span>Calcul</span><span id="p-calcul">—</span></div><div class="bar-track"><div class="bar-fill" id="b-calcul" style="width:0%;background:var(--green)"></div></div></div>
-        <div class="topic-bar"><div class="topic-label"><span>Algèbre</span><span id="p-alg">—</span></div><div class="bar-track"><div class="bar-fill" id="b-alg" style="width:0%;background:var(--blue)"></div></div></div>
-        <div class="topic-bar"><div class="topic-label"><span>Géométrie</span><span id="p-geo">—</span></div><div class="bar-track"><div class="bar-fill" id="b-geo" style="width:0%;background:var(--accent)"></div></div></div>
-        <div class="topic-bar"><div class="topic-label"><span>Stats & Proba</span><span id="p-stat">—</span></div><div class="bar-track"><div class="bar-fill" id="b-stat" style="width:0%;background:var(--amber)"></div></div></div>
-        <div class="topic-bar"><div class="topic-label"><span>Fonctions</span><span id="p-fonc">—</span></div><div class="bar-track"><div class="bar-fill" id="b-fonc" style="width:0%;background:#EC4899"></div></div></div>
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-sessions" style="color:var(--gold)">0</div>
+        <div class="stat-lbl">Sessions</div>
       </div>
-      <div class="side-card">
-        <div class="side-card-title">💡 Conseil</div>
-        <div class="hint-box" id="hint-box"><div class="hint-icon">✏️</div>Pose tes calculs sur papier avant de répondre — ça aide vraiment à retenir.</div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-exos" style="color:var(--teal)">0</div>
+        <div class="stat-lbl">Exercices</div>
       </div>
-      <button class="btn-pause" onclick="triggerPause()">☕ Pause 5 min</button>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-score-home" style="color:var(--purple)">—</div>
+        <div class="stat-lbl">Score moy.</div>
+      </div>
+    </div>
+
+    <!-- Today's session -->
+    <div class="section-title">SESSION DU JOUR</div>
+    <div class="today-card" onclick="goToElio()">
+      <div class="today-card-left">
+        <div class="today-label">⚔️ Elio t'attend</div>
+        <div class="today-title" id="today-theme">Commencer le diagnostic</div>
+        <div class="today-sub" id="today-sub">20 questions pour évaluer ton niveau</div>
+      </div>
+      <button class="btn-play">▶</button>
+    </div>
+
+    <!-- Theme progress -->
+    <div class="section-title">PROGRESSION PAR THÈME</div>
+    <div class="theme-progress">
+      <div class="theme-row"><div class="theme-emoji">🔢</div><div class="theme-info"><div class="theme-name">Calcul</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-calcul" style="width:0%;background:var(--green)"></div></div></div><div class="theme-pct" id="tpp-calcul">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">🔤</div><div class="theme-info"><div class="theme-name">Algèbre</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-alg" style="width:0%;background:var(--blue)"></div></div></div><div class="theme-pct" id="tpp-alg">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📐</div><div class="theme-info"><div class="theme-name">Géométrie</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-geo" style="width:0%;background:var(--purple)"></div></div></div><div class="theme-pct" id="tpp-geo">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📈</div><div class="theme-info"><div class="theme-name">Fonctions</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-fonc" style="width:0%;background:var(--amber)"></div></div></div><div class="theme-pct" id="tpp-fonc">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📊</div><div class="theme-info"><div class="theme-name">Stats & Proba</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-stat" style="width:0%;background:var(--teal)"></div></div></div><div class="theme-pct" id="tpp-stat">0%</div></div>
+    </div>
+
+    <!-- Badges -->
+    <div class="section-title">BADGES</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+
+  <!-- SCREEN 2: ELIO -->
+  <div class="screen" id="screen-elio">
+    <div class="elio-screen">
+      <!-- Medieval background -->
+      <div class="medieval-bg">
+        <div class="sky" id="medieval-sky"></div>
+        <!-- Ground -->
+        <div class="ground"></div>
+        <!-- Castle SVG -->
+        <svg class="castle" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+          <rect x="150" y="60" width="100" height="140" fill="#0D0A1A"/>
+          <rect x="130" y="40" width="30" height="80" fill="#0D0A1A"/>
+          <rect x="240" y="40" width="30" height="80" fill="#0D0A1A"/>
+          <rect x="125" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="141" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="157" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="235" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="251" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="267" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="145" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="161" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="247" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="263" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="180" y="110" width="40" height="90" fill="#150F25" rx="3"/>
+          <rect x="175" y="70" width="50" height="10" fill="#F5C842" opacity="0.3"/>
+          <circle cx="200" cy="75" r="4" fill="#F5C842" opacity="0.6"/>
+          <rect x="0" y="140" width="130" height="60" fill="#080510"/>
+          <rect x="270" y="140" width="130" height="60" fill="#080510"/>
+          <rect x="0" y="130" width="60" height="70" fill="#080510"/>
+          <rect x="340" y="130" width="60" height="70" fill="#080510"/>
+        </svg>
+        <!-- Torches -->
+        <div class="torch torch-left"><div class="flame"></div></div>
+        <div class="torch torch-right"><div class="flame"></div></div>
+      </div>
+
+      <!-- Progress bar top -->
+      <div class="progress-top" id="progress-top" style="display:none">
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-count" id="progress-count">0/20</div>
+        <button class="btn-exit" onclick="exitSession()">✕</button>
+      </div>
+
+      <!-- Speech bubble -->
+      <div class="speech-area" id="speech-area">
+        <div class="speech-bubble" id="speech-bubble">
+          <div class="speech-typing" id="speech-typing"><span></span><span></span><span></span></div>
+          <div class="speech-text" id="speech-text" style="display:none"></div>
+        </div>
+        <div class="exercise-card" id="exercise-card" style="display:none">
+          <div class="exercise-topic-badge" id="ex-topic"></div>
+          <div class="exercise-question" id="ex-question"></div>
+          <div class="exercise-stars" id="ex-stars"></div>
+        </div>
+      </div>
+
+      <!-- Elio character -->
+      <div class="elio-character" id="elio-char" onclick="elioTap()">
+        <svg width="120" height="200" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Boots -->
+          <ellipse cx="42" cy="188" rx="16" ry="8" fill="#2A1F0A"/>
+          <ellipse cx="78" cy="188" rx="16" ry="8" fill="#2A1F0A"/>
+          <rect x="28" y="165" width="28" height="26" rx="6" fill="#3D2E0F"/>
+          <rect x="64" y="165" width="28" height="26" rx="6" fill="#3D2E0F"/>
+          <!-- Pants -->
+          <rect x="32" y="130" width="24" height="40" rx="4" fill="#1A3A5C"/>
+          <rect x="64" y="130" width="24" height="40" rx="4" fill="#1A3A5C"/>
+          <!-- Belt -->
+          <rect x="28" y="125" width="64" height="10" rx="3" fill="#5C3A00"/>
+          <circle cx="60" cy="130" r="5" fill="#F5C842"/>
+          <!-- Tunic/Body -->
+          <path d="M25 80 Q20 90 22 130 L98 130 Q100 90 95 80 Q80 70 60 68 Q40 70 25 80Z" fill="#1DB954"/>
+          <path d="M40 80 L42 130 L78 130 L80 80 Q60 72 40 80Z" fill="#17A045" opacity="0.5"/>
+          <!-- Cape -->
+          <path d="M25 82 Q15 100 18 140 Q20 145 25 143 Q30 130 32 120 Q28 110 25 82Z" fill="#8B0000" opacity="0.9"/>
+          <path d="M95 82 Q105 100 102 140 Q100 145 95 143 Q90 130 88 120 Q92 110 95 82Z" fill="#8B0000" opacity="0.9"/>
+          <!-- Arms -->
+          <rect x="8" y="80" width="20" height="50" rx="8" fill="#F5C5A3"/>
+          <rect x="92" y="80" width="20" height="50" rx="8" fill="#F5C5A3"/>
+          <!-- Gloves -->
+          <ellipse cx="18" cy="132" rx="10" ry="8" fill="#3D2E0F"/>
+          <ellipse cx="102" cy="132" rx="10" ry="8" fill="#3D2E0F"/>
+          <!-- Sword -->
+          <rect x="106" y="90" width="4" height="50" rx="2" fill="#C0C0C0"/>
+          <rect x="100" y="88" width="16" height="6" rx="2" fill="#F5C842"/>
+          <rect x="108" y="80" width="2" height="12" rx="1" fill="#F5C842"/>
+          <!-- Neck -->
+          <rect x="52" y="60" width="16" height="18" rx="5" fill="#F5C5A3"/>
+          <!-- Head -->
+          <ellipse cx="60" cy="44" rx="28" ry="30" fill="#F5C5A3"/>
+          <!-- Hair -->
+          <path d="M33 36 Q35 10 60 8 Q85 10 87 36 Q82 18 60 16 Q38 18 33 36Z" fill="#1A1A1A"/>
+          <path d="M48 12 Q52 2 58 6 Q54 14 50 18Z" fill="#1A1A1A"/>
+          <path d="M60 10 Q63 0 68 4 Q65 12 61 16Z" fill="#1A1A1A"/>
+          <path d="M72 13 Q78 4 82 9 Q77 16 73 19Z" fill="#1A1A1A"/>
+          <!-- Eyebrows -->
+          <path d="M42 30 Q48 26 54 29" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M66 29 Q72 26 78 30" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Eyes -->
+          <ellipse cx="49" cy="38" rx="7" ry="7.5" fill="white"/>
+          <ellipse cx="71" cy="38" rx="7" ry="7.5" fill="white"/>
+          <path d="M42 34 Q49 30 56 34" fill="#F5C5A3" opacity="0.9"/>
+          <path d="M64 34 Q71 30 78 34" fill="#F5C5A3" opacity="0.9"/>
+          <circle cx="50" cy="39" r="4.5" fill="#111"/>
+          <circle cx="72" cy="39" r="4.5" fill="#111"/>
+          <circle cx="48" cy="37" r="1.8" fill="#F5C842"/>
+          <circle cx="70" cy="37" r="1.8" fill="#F5C842"/>
+          <circle cx="46.5" cy="36" r="1.2" fill="white"/>
+          <circle cx="68.5" cy="36" r="1.2" fill="white"/>
+          <!-- Nose -->
+          <path d="M58 44 Q56 50 55 52 Q60 54 65 52 Q64 50 62 44Z" fill="#E8A882" opacity="0.6"/>
+          <!-- Smile -->
+          <path d="M50 58 Q60 66 70 58" stroke="#C0706A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Cheeks -->
+          <ellipse cx="37" cy="50" rx="9" ry="6" fill="#E8907A" opacity="0.35"/>
+          <ellipse cx="83" cy="50" rx="9" ry="6" fill="#E8907A" opacity="0.35"/>
+          <!-- Helmet/Crown -->
+          <path d="M32 26 Q34 12 60 10 Q86 12 88 26 Q82 16 60 14 Q38 16 32 26Z" fill="#F5C842" opacity="0.8"/>
+          <path d="M32 26 L36 18 L40 26" fill="#F5C842"/>
+          <path d="M54 22 L58 10 L62 22" fill="#F5C842"/>
+          <path d="M80 26 L84 18 L88 26" fill="#F5C842"/>
+          <circle cx="38" cy="20" r="4" fill="#FF5C6A"/>
+          <circle cx="60" cy="12" r="4" fill="#FF5C6A"/>
+          <circle cx="82" cy="20" r="4" fill="#FF5C6A"/>
+        </svg>
+      </div>
+
+      <!-- Answer area -->
+      <div class="answer-area" id="answer-area">
+        <div class="answer-input-row">
+          <input type="text" class="answer-input" id="answer-input" placeholder="Ta réponse..." onkeydown="handleAnswerKey(event)" disabled/>
+          <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
+        </div>
+      </div>
+
+      <!-- Feedback overlay -->
+      <div class="feedback-overlay" id="feedback-overlay">
+        <div class="feedback-card" id="feedback-card">
+          <div class="feedback-emoji" id="feedback-emoji">✅</div>
+          <div class="feedback-title" id="feedback-title">Bonne réponse !</div>
+          <div class="feedback-text" id="feedback-text"></div>
+          <button class="btn-next" onclick="nextQuestion()">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- Session end -->
+      <div class="session-end-overlay" id="session-end">
+        <div class="session-end-card">
+          <div class="session-end-emoji" id="end-emoji">🏆</div>
+          <div class="session-end-title" id="end-title">Session terminée !</div>
+          <div class="session-end-sub" id="end-sub">T'as bien bossé !</div>
+          <div class="session-end-stats">
+            <div class="ses-stat"><div class="ses-stat-val" id="end-exos">0</div><div class="ses-stat-lbl">Exercices</div></div>
+            <div class="ses-stat"><div class="ses-stat-val" id="end-score">0%</div><div class="ses-stat-lbl">Score</div></div>
+            <div class="ses-stat"><div class="ses-stat-val" id="end-xp">+0</div><div class="ses-stat-lbl">XP gagnés</div></div>
+          </div>
+          <button class="btn-home" onclick="endSession()">Retour à l'accueil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: COURS -->
+  <div class="screen" id="screen-cours">
+    <div class="courses-header">
+      <div class="courses-title">📚 Fiches de cours</div>
+      <div class="courses-sub">Elio génère une fiche personnalisée pour chaque chapitre</div>
+    </div>
+    <div id="courses-list"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Accueil</span>
+    </button>
+    <button class="nav-btn" id="nav-elio" onclick="switchScreen('elio')">
+      <span class="nav-icon">⚔️</span>
+      <span class="nav-label">Elio</span>
+    </button>
+    <button class="nav-btn" id="nav-cours" onclick="switchScreen('cours')">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Cours</span>
+    </button>
+  </div>
+</div>
+
+<!-- FICHE DETAIL OVERLAY -->
+<div class="fiche-overlay" id="fiche-overlay">
+  <div class="fiche-header">
+    <button class="btn-back-fiche" onclick="closeFiche()">← Retour</button>
+    <div class="fiche-header-title" id="fiche-title"></div>
+  </div>
+  <div class="fiche-content" id="fiche-content">
+    <div class="fiche-loading">
+      <span class="fiche-loading-elio">⚔️</span>
+      <div>Elio prépare ta fiche...</div>
     </div>
   </div>
 </div>
 
 <script>
+// ============================================
+// CONFIG
+// ============================================
 const SUPABASE_URL='https://sosykwzdarjwliilakgk.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvc3lrd3pkYXJqd2xpaWxha2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzE0MDMsImV4cCI6MjA4OTE0NzQwM30.wjWRuf4njfTBGEZcbWq6yUmBPBdOvng9B0KV8I1P9bk';
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const BACKEND='https://educoach-poc-production.up.railway.app';
 
-let currentUser=null;
+// ============================================
+// PROGRAMME
+// ============================================
+const PROGRAMME = {
+  '🔢 Calcul numérique': [
+    {id:'calc1',name:'Fractions',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'calc2',name:'Puissances',level:'4e',levels:['4e','3e']},
+    {id:'calc3',name:'Racines carrées',level:'3e',levels:['3e']},
+    {id:'calc4',name:'Notation scientifique',level:'4e',levels:['4e','3e']},
+    {id:'calc5',name:'Priorités opératoires',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '🔤 Algèbre': [
+    {id:'alg1',name:'Développement & factorisation',level:'4e',levels:['4e','3e']},
+    {id:'alg2',name:'Identités remarquables',level:'3e',levels:['3e']},
+    {id:'alg3',name:'Équations du 1er degré',level:'4e',levels:['4e','3e']},
+    {id:'alg4',name:'Systèmes d\'équations',level:'3e',levels:['3e']},
+    {id:'alg5',name:'Inéquations',level:'3e',levels:['3e']},
+  ],
+  '📐 Géométrie': [
+    {id:'geo1',name:'Théorème de Pythagore',level:'4e',levels:['4e','3e']},
+    {id:'geo2',name:'Théorème de Thalès',level:'3e',levels:['3e']},
+    {id:'geo3',name:'Trigonométrie',level:'3e',levels:['3e']},
+    {id:'geo4',name:'Aires et périmètres',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'geo5',name:'Volumes',level:'3e',levels:['3e']},
+    {id:'geo6',name:'Transformations',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '📈 Fonctions': [
+    {id:'fonc1',name:'Proportionnalité',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'fonc2',name:'Fonctions linéaires et affines',level:'3e',levels:['3e']},
+    {id:'fonc3',name:'Lecture de graphiques',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '📊 Stats & Probabilités': [
+    {id:'stat1',name:'Moyenne, médiane, étendue',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'stat2',name:'Diagrammes',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'stat3',name:'Probabilités simples',level:'4e',levels:['4e','3e']},
+    {id:'stat4',name:'Arbres de probabilités',level:'3e',levels:['3e']},
+  ],
+};
 
+// ============================================
+// STATE
+// ============================================
+const state = {
+  studentName: '',
+  studentLevel: null,
+  checkedChapters: new Set(),
+  xp: 0,
+  sessions: 0,
+  totalExos: 0,
+  streak: 1,
+  scores: {calcul:0, alg:0, geo:0, fonc:0, stat:0},
+  diagDone: false,
+  // Session
+  phase: 'idle', // idle | diagnostic | training
+  diagQuestions: [],
+  diagIndex: 0,
+  diagScores: {calcul:[], alg:[], geo:[], fonc:[], stat:[]},
+  currentExercise: null,
+  sessionExos: 0,
+  sessionCorrect: 0,
+  sessionStart: null,
+  explainedThemes: {},
+  trainingPlan: null,
+  todayTheme: null,
+};
+
+const LEVELS = [
+  {min:0,max:99,emoji:'🥚',title:'Rookie',num:1},
+  {min:100,max:249,emoji:'⚔️',title:'Apprenti',num:2},
+  {min:250,max:499,emoji:'🛡️',title:'Guerrier',num:3},
+  {min:500,max:899,emoji:'🧙',title:'Mage',num:4},
+  {min:900,max:1499,emoji:'🔥',title:'Élite',num:5},
+  {min:1500,max:2499,emoji:'💎',title:'Légende',num:6},
+  {min:2500,max:99999,emoji:'👑',title:'Grand Maître',num:7},
+];
+
+const BADGES = [
+  {id:'first',emoji:'🎯',name:'Premier pas',condition:s=>s.totalExos>=1},
+  {id:'streak3',emoji:'🔥',name:'3 jours',condition:s=>s.streak>=3},
+  {id:'diag',emoji:'📋',name:'Diagnostiqué',condition:s=>s.diagDone},
+  {id:'exo10',emoji:'⚡',name:'10 exos',condition:s=>s.totalExos>=10},
+  {id:'score80',emoji:'🏆',name:'Score 80%',condition:s=>avgScore()>=80},
+  {id:'exo50',emoji:'💫',name:'50 exos',condition:s=>s.totalExos>=50},
+  {id:'mage',emoji:'🧙',name:'Mage',condition:s=>state.xp>=500},
+  {id:'legend',emoji:'💎',name:'Légende',condition:s=>state.xp>=1500},
+];
+
+// ============================================
+// AUTH
+// ============================================
 function switchTab(tab){
   document.getElementById('tab-login').classList.toggle('active',tab==='login');
   document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
@@ -511,647 +724,730 @@ function showAuthMsg(msg,type){const el=document.getElementById('auth-msg');el.t
 
 async function login(){
   const email=document.getElementById('login-email').value.trim();
-  const password=document.getElementById('login-password').value;
-  if(!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
-  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Connexion...';
-  const{error}=await sb.auth.signInWithPassword({email,password});
-  btn.disabled=false;btn.textContent='On y va →';
+  const pw=document.getElementById('login-password').value;
+  if(!email||!pw){showAuthMsg('Remplis tous les champs !','error');return}
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='...';
+  const{error}=await sb.auth.signInWithPassword({email,password:pw});
+  btn.disabled=false;btn.textContent='Entrer dans le royaume →';
   if(error)showAuthMsg('Email ou mot de passe incorrect.','error');
 }
 async function signup(){
   const name=document.getElementById('signup-name').value.trim();
   const email=document.getElementById('signup-email').value.trim();
-  const password=document.getElementById('signup-password').value;
-  if(!name||!email||!password){showAuthMsg('Remplis tous les champs !','error');return}
-  if(password.length<6){showAuthMsg('Mot de passe trop court (6 min).','error');return}
-  const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='Création...';
-  const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name}}});
+  const pw=document.getElementById('signup-password').value;
+  if(!name||!email||!pw){showAuthMsg('Remplis tous les champs !','error');return}
+  const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='...';
+  const{error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});
   btn.disabled=false;btn.textContent='Créer mon compte →';
   if(error)showAuthMsg('Erreur : '+error.message,'error');
   else showAuthMsg('Compte créé ! Vérifie ton email.','success');
 }
-async function loginGoogle(){await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}})}
-async function logout(){await sb.auth.signOut();location.reload()}
+async function loginGoogle(){
+  await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+}
 
 sb.auth.onAuthStateChange((event,session)=>{
   if(session?.user){
-    currentUser=session.user;
     const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
     state.studentName=name;
-    document.getElementById('user-email-display').textContent=name;
     document.getElementById('auth-screen').style.display='none';
-    document.getElementById('app').classList.add('visible');
-    if(!state.sessionStarted){state.sessionStarted=true;document.getElementById("user-input").disabled=false;document.getElementById("send-btn").disabled=false;startTimer();startDiagnostic()}
+    loadProgress();
+    const saved=localStorage.getItem('educoach_level');
+    if(!saved){
+      document.getElementById('setup-screen').classList.add('show');
+    } else {
+      state.studentLevel=saved;
+      state.checkedChapters=new Set(JSON.parse(localStorage.getItem('educoach_chapters')||'[]'));
+      loadProgress();
+      showApp();
+    }
   }
 });
 
-const state={
-  studentName:'',studentId:localStorage.getItem('educoach_student_id')||null,sessionSeconds:0,exercicesCount:0,correctCount:0,
-  phase:'onboarding',diagQuestions:[],diagIndex:0,sessionStarted:false,
-  diagScores:{calcul:[],alg:[],geo:[],stat:[],fonc:[]},
-  conversationHistory:[],currentExercise:null,awaitingAnswer:false,
-  topics:{calcul:null,alg:null,geo:null,stat:null,fonc:null},
-  pauseSeconds:300,pauseInterval:null,sessionInterval:null,warningShown:false,trainingPlan:null
-};
+// ============================================
+// SETUP
+// ============================================
+let selectedLevel = null;
 
-const ELIO_SYSTEM=`Tu es Elio, un ado cool et bienveillant qui aide les élèves de 3e à préparer le brevet de maths. Tu parles comme un grand frère sympa qui s'y connaît — naturel, direct, sans être condescendant ni caricatural. Exemples de ton ton : "Bonne réponse, t'as géré ✅", "Pas tout à fait — mais c'est exactement pour ça qu'on est là", "Allez, un exo sur les équations", "Ok j'ai vu ce qui se passe". Jamais de "Excellent travail !" ou de formules de prof. Réponses courtes (max 120 mots). Suggère de poser les calculs sur papier.`;
-
-const DIAG_PROMPT=(name)=>`Tu es Elio. Crée un diagnostic pour ${name}, élève de 3e préparant le brevet de maths.
-Génère exactement 20 questions couvrant 5 thèmes (4 questions par thème) :
-- calcul : fractions, puissances, racines carrées, priorités
-- algebre : équations, calcul littéral, développement, factorisation
-- geometrie : Pythagore, Thalès, aires, angles
-- statistiques : moyenne, médiane, étendue, probabilités
-- fonctions : tableaux de valeurs, lecture graphique, proportionnalité
-Réponds UNIQUEMENT avec ce JSON valide :
-{"questions":[{"id":1,"theme":"calcul","question":"énoncé","expected":"réponse exacte","difficulty":2},...]}
-Règles : difficulty 1-3, expected = réponse courte exacte, 20 questions.`;
-
-const EVAL_DIAG=(q,e,a)=>`Évalue cette réponse brevet 3e.
-Question: ${q}
-Réponse attendue: ${e}
-Réponse élève: ${a}
-Réponds UNIQUEMENT avec ce JSON: {"correct":true/false,"partial":0.0-1.0,"comment":"feedback max 15 mots, ton cool pas prof"}
-Sois souple sur les équivalents.`;
-
-const PLAN_PROMPT=(name,s)=>`Tu es Elio. Diagnostic terminé pour ${name}.
-Résultats : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
-Présente les résultats avec ton ton naturel de grand frère (pas de prof). Annonce le plan du plus faible au plus fort. Dis que tu attaques maintenant. Max 180 mots. Pas de "Excellent" ni de formules pompeux.`;
-
-const EXPLAIN_PROMPT=(name,theme,score)=>`Tu es Elio, coach maths de ${name}.
-Le thème "${theme}" est à ${score}% — c'est un point faible à travailler.
-Fais une mini-leçon en 3 étapes avec ton ton naturel de grand frère :
-1. Explication claire et courte du concept (3-4 lignes max)
-2. Un exemple résolu pas à pas (montre les étapes)
-3. Une question de contrôle simple pour vérifier que c'est compris
-
-Format ta réponse comme ça :
-📖 **Le concept :** [explication]
-✏️ **Exemple :** [exemple résolu]
-❓ **Question :** [question courte]
-
-Reste naturel, pas de jargon de prof. Max 200 mots au total.`;
-
-const EXPLAIN_CHECK_PROMPT=(question,expected,answer)=>`Tu es Elio. L'élève vient de répondre à une question de contrôle.
-Question : ${question}
-Réponse attendue : ${expected}
-Réponse de l'élève : ${answer}
-Réponds UNIQUEMENT avec ce JSON :
-{"correct":true/false,"feedback":"feedback court et naturel max 40 mots","ready":true/false}
-Si c'est à peu près correct, mets ready:true et correct:true.`;
-
-const EXERCISE_PROMPT=(name,weak,s)=>`Tu es Elio, coach maths de ${name}.
-Points faibles : ${weak.join(', ')}. Scores : Calcul ${s.calcul}%, Algèbre ${s.alg}%, Géométrie ${s.geo}%, Stats ${s.stat}%, Fonctions ${s.fonc}%
-Génère UN exercice adapté (thème le plus faible en priorité).
-Réponds UNIQUEMENT avec ce JSON :
-{"type":"exercice","topic":"nom du thème","difficulty":1-5,"question":"énoncé complet","expected":"réponse exacte","hint":"indice si bloqué"}`;
-
-const EVAL_TRAINING=(q,e,a)=>`Tu es Elio. Évalue la réponse de l'élève avec ton ton cool de grand frère.
-Question: ${q}
-Réponse attendue: ${e}
-Réponse élève: ${a}
-Réponds UNIQUEMENT avec ce JSON :
-{"correct":true/false,"feedback":"explication max 80 mots ton naturel","encouragement":"phrase motivante courte et naturelle"}`;
-
-function startTimer(){
-  state.sessionInterval=setInterval(()=>{
-    state.sessionSeconds++;
-    const m=Math.floor(state.sessionSeconds/60).toString().padStart(2,'0');
-    const s=(state.sessionSeconds%60).toString().padStart(2,'0');
-    document.getElementById('session-timer').textContent=`${m}:${s}`;
-    if(state.sessionSeconds===1200&&!state.warningShown){document.getElementById('screen-warning').classList.add('show');state.warningShown=true}
-    if(state.sessionSeconds===1500)triggerPause();
-  },1000);
+function selectLevel(lvl){
+  selectedLevel=lvl;
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('lvl-'+lvl).classList.add('selected');
+  document.getElementById('btn-next-level').disabled=false;
 }
-function triggerPause(){document.getElementById('pause-overlay').classList.add('show');state.pauseSeconds=300;updatePauseCountdown();state.pauseInterval=setInterval(()=>{state.pauseSeconds--;updatePauseCountdown();if(state.pauseSeconds<=0){clearInterval(state.pauseInterval);resumeSession()}},1000)}
-function updatePauseCountdown(){const m=Math.floor(state.pauseSeconds/60).toString().padStart(2,'0');const s=(state.pauseSeconds%60).toString().padStart(2,'0');document.getElementById('pause-countdown').textContent=`${m}:${s}`}
-function resumeSession(){clearInterval(state.pauseInterval);document.getElementById('pause-overlay').classList.remove('show');addElioMsg(`Allez, on reprend ! T'as bien récupéré ? 💪`)}
 
+function goToChapters(){
+  if(!selectedLevel)return;
+  state.studentLevel=selectedLevel;
+  document.getElementById('setup-step-1').classList.remove('active');
+  document.getElementById('setup-step-2').classList.add('active');
+  buildChaptersList();
+}
 
-async function logSessionToSupabase(scores, exos, correct, mins, theme){
-  const studentId=state.studentId||localStorage.getItem('educoach_student_id');
-  if(!studentId)return;
-  try{
-    await fetch(`${BACKEND}/api/session/log`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        student_id:studentId,
-        theme:theme,
-        exercises_count:exos,
-        correct_count:correct,
-        score:exos>0?Math.round((correct/exos)*100):0,
-        duration_minutes:mins,
-        scores_snapshot:scores
-      })
+function buildChaptersList(){
+  const container=document.getElementById('chapters-list');
+  container.innerHTML='';
+  Object.entries(PROGRAMME).forEach(([group,chapters])=>{
+    const title=document.createElement('div');
+    title.className='chapter-group-title';
+    title.textContent=group;
+    container.appendChild(title);
+    chapters.forEach(ch=>{
+      const isAvailable=ch.levels.includes(selectedLevel);
+      const item=document.createElement('div');
+      item.className='chapter-item'+(isAvailable?' checked':'');
+      item.id='ch-'+ch.id;
+      if(isAvailable)state.checkedChapters.add(ch.id);
+      item.innerHTML=`<div class="chapter-checkbox">${isAvailable?'✓':''}</div><div class="chapter-name">${ch.name}</div><span class="chapter-level">${ch.level}</span>`;
+      item.onclick=()=>toggleChapter(ch.id,item,isAvailable);
+      container.appendChild(item);
     });
-  }catch(e){console.log('session log error:',e)}
+  });
 }
 
+function toggleChapter(id,el,wasAvailable){
+  if(state.checkedChapters.has(id)){
+    state.checkedChapters.delete(id);
+    el.classList.remove('checked');
+    el.querySelector('.chapter-checkbox').textContent='';
+  } else {
+    state.checkedChapters.add(id);
+    el.classList.add('checked');
+    el.querySelector('.chapter-checkbox').textContent='✓';
+  }
+}
+
+function finishSetup(){
+  localStorage.setItem('educoach_level',state.studentLevel);
+  localStorage.setItem('educoach_chapters',JSON.stringify([...state.checkedChapters]));
+  document.getElementById('setup-screen').classList.remove('show');
+  showApp();
+  setTimeout(()=>{switchScreen('elio');startDiagnostic();},400);
+}
+
+// ============================================
+// APP
+// ============================================
+function showApp(){
+  document.getElementById('app').classList.add('visible');
+  updateHomeScreen();
+  buildCoursesList();
+  generateStars();
+}
+
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='home')updateHomeScreen();
+}
+
+function goToElio(){
+  switchScreen('elio');
+  if(state.phase==='idle'&&!state.diagDone){
+    startDiagnostic();
+  } else if(state.phase==='idle'&&state.diagDone){
+    startTraining();
+  }
+}
+
+// ============================================
+// HOME SCREEN
+// ============================================
+function updateHomeScreen(){
+  document.getElementById('home-name').textContent=state.studentName;
+  document.getElementById('home-streak').textContent=state.streak;
+  // XP
+  const lvl=getLevelData();
+  document.getElementById('xp-emoji').textContent=lvl.emoji;
+  document.getElementById('xp-title').textContent=lvl.title;
+  document.getElementById('xp-level-num').textContent=lvl.num;
+  const nextLvl=LEVELS[lvl.num]||LEVELS[LEVELS.length-1];
+  const xpInLevel=state.xp-lvl.min;
+  const xpNeeded=lvl.max-lvl.min+1;
+  const pct=Math.min(100,Math.round((xpInLevel/xpNeeded)*100));
+  document.getElementById('xp-current').textContent=state.xp;
+  document.getElementById('xp-next').textContent=lvl.max+1;
+  document.getElementById('xp-bar').style.width=pct+'%';
+  document.getElementById('xp-bar-next').textContent=(lvl.max+1)+' XP';
+  // Stats
+  document.getElementById('stat-sessions').textContent=state.sessions;
+  document.getElementById('stat-exos').textContent=state.totalExos;
+  const avg=avgScore();
+  document.getElementById('stat-score-home').textContent=avg>0?avg+'%':'—';
+  // Today
+  if(!state.diagDone){
+    document.getElementById('today-theme').textContent='Commencer le diagnostic';
+    document.getElementById('today-sub').textContent='20 questions pour évaluer ton niveau';
+  } else {
+    const weak=getWeakTheme();
+    document.getElementById('today-theme').textContent='Session '+weak;
+    document.getElementById('today-sub').textContent='10 exercices · ~20 min';
+  }
+  // Theme bars
+  const tMap={calcul:'calcul',alg:'alg',geo:'geo',fonc:'fonc',stat:'stat'};
+  Object.entries(tMap).forEach(([k,v])=>{
+    const pct=state.scores[k]||0;
+    document.getElementById('tp-'+v).style.width=pct+'%';
+    document.getElementById('tpp-'+v).textContent=pct+'%';
+  });
+  // Badges
+  buildBadges();
+}
+
+function buildBadges(){
+  const grid=document.getElementById('badges-grid');
+  grid.innerHTML=BADGES.map(b=>{
+    const earned=b.condition(state);
+    return `<div class="badge-card${earned?' earned':' locked'}">
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function getLevelData(){
+  return LEVELS.find(l=>state.xp>=l.min&&state.xp<=l.max)||LEVELS[LEVELS.length-1];
+}
+
+function avgScore(){
+  const vals=Object.values(state.scores).filter(v=>v>0);
+  return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
+}
+
+function getWeakTheme(){
+  const names={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',fonc:'Fonctions',stat:'Stats'};
+  const sorted=Object.entries(state.scores).sort((a,b)=>a[1]-b[1]);
+  return names[sorted[0][0]]||'Maths';
+}
+
+// ============================================
+// STARS GENERATION
+// ============================================
+function generateStars(){
+  const sky=document.getElementById('medieval-sky');
+  for(let i=0;i<60;i++){
+    const star=document.createElement('div');
+    star.className='star';
+    const size=Math.random()*3+1;
+    star.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*60}%;left:${Math.random()*100}%;--d:${2+Math.random()*3}s;--delay:${Math.random()*3}s;--o:${0.4+Math.random()*0.6}`;
+    sky.appendChild(star);
+  }
+}
+
+// ============================================
+// ELIO INTERACTION
+// ============================================
+function elioTap(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('bounce');
+  setTimeout(()=>char.classList.remove('bounce'),500);
+}
+
+function elioBounce(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('bounce');
+  setTimeout(()=>char.classList.remove('bounce'),500);
+}
+
+function elioShake(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('shake');
+  setTimeout(()=>char.classList.remove('shake'),400);
+}
+
+// ============================================
+// SPEECH BUBBLE
+// ============================================
+function showSpeech(text, showExercise=null){
+  const bubble=document.getElementById('speech-bubble');
+  const typing=document.getElementById('speech-typing');
+  const textEl=document.getElementById('speech-text');
+  const exCard=document.getElementById('exercise-card');
+  typing.style.display='none';
+  textEl.style.display='block';
+  textEl.textContent=text;
+  bubble.style.display='block';
+  if(showExercise){
+    exCard.style.display='block';
+    document.getElementById('ex-topic').textContent=showExercise.topic||'';
+    document.getElementById('ex-question').textContent=showExercise.question||'';
+    const stars=Array.from({length:5},(_,i)=>`<span>${i<(showExercise.difficulty||1)?'⭐':'☆'}</span>`).join('');
+    document.getElementById('ex-stars').innerHTML=stars;
+  } else {
+    exCard.style.display='none';
+  }
+}
+
+function showTypingBubble(){
+  const bubble=document.getElementById('speech-bubble');
+  const typing=document.getElementById('speech-typing');
+  const textEl=document.getElementById('speech-text');
+  const exCard=document.getElementById('exercise-card');
+  typing.style.display='flex';
+  textEl.style.display='none';
+  exCard.style.display='none';
+  bubble.style.display='block';
+}
+
+// ============================================
+// API CALL
+// ============================================
+async function callAPI(messages, system, maxTokens=1000){
+  const r=await fetch(`${BACKEND}/v1/messages`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})
+  });
+  const d=await r.json();
+  return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+}
+
+const ELIO_SYSTEM=`Tu es Elio, un chevalier-coach bienveillant dans un univers médiéval fantastique. Tu aides les élèves de collège à préparer le brevet de maths. Ton ton : naturel, direct, motivant. Comme un grand frère qui s'y connaît. Réponses courtes (max 100 mots). Jamais de jargon de prof.`;
+
+// ============================================
+// DIAGNOSTIC
+// ============================================
 async function startDiagnostic(){
-  state.phase='generating';document.getElementById('stat-phase').textContent='Diagnostic';
-  addElioMsg(`Salut ${state.studentName} ! Moi c'est Elio 👋 Je vais t'aider à être meilleur en maths. Première étape : 20 questions pour voir où t'en es. Pas de stress — c'est juste pour qu'on parte sur de bonnes bases. Je prépare ça...`);
-  showTyping();
+  state.phase='diagnostic';
+  state.diagQuestions=[];
+  state.diagIndex=0;
+  state.diagScores={calcul:[],alg:[],geo:[],fonc:[],stat:[]};
+  document.getElementById('progress-top').style.display='flex';
+  document.getElementById('answer-input').disabled=false;
+  document.getElementById('btn-send').disabled=false;
+
+  const checkedList=[...state.checkedChapters].join(', ');
+  const diagPrompt=`Tu es Elio. Crée un diagnostic pour un élève de ${state.studentLevel||'3e'}.
+Chapitres étudiés : ${checkedList}
+Génère exactement 20 questions UNIQUEMENT sur ces chapitres (4 par thème si possible, sinon adapte).
+Réponds UNIQUEMENT avec ce JSON :
+{"questions":[{"id":1,"theme":"calcul","topic":"fractions","question":"énoncé","expected":"réponse exacte","difficulty":2},...]}
+Thèmes possibles : calcul, alg, geo, fonc, stat. difficulty 1-3. expected = réponse courte.`;
+
+  showTypingBubble();
+  showSpeech('');
+  document.getElementById('speech-typing').style.display='flex';
+  document.getElementById('speech-text').style.display='none';
+
   try{
-    const resp=await callAPI([{role:'user',content:DIAG_PROMPT(state.studentName)}],ELIO_SYSTEM,2500);
-    hideTyping();
-    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();
+    const resp=await callAPI([{role:'user',content:diagPrompt}],ELIO_SYSTEM,2500);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const data=JSON.parse(clean);
-    state.diagQuestions=data.questions;state.phase='diagnostic';updateDiagCounter();askDiagQ(0);
-  }catch(e){hideTyping();console.error(e);addElioMsg(`Oups, bug technique 😅 Recharge la page et réessaie !`)}
+    state.diagQuestions=data.questions;
+    showSpeech(`Salut ${state.studentName} ! Je suis Elio ⚔️ On commence par 20 questions pour voir ton niveau. Pas de stress — c'est juste pour créer ton plan perso !`);
+    await sleep(2500);
+    askDiagQuestion(0);
+  }catch(e){
+    console.error(e);
+    showSpeech('Oups, problème technique 😅 Recharge la page !');
+  }
 }
 
-function askDiagQ(i){
+function askDiagQuestion(i){
   if(i>=state.diagQuestions.length){finishDiagnostic();return}
-  state.diagIndex=i;const q=state.diagQuestions[i];state.currentExercise=q;state.awaitingAnswer=true;updateDiagCounter();
-  const labels={calcul:'Calcul',alg:'Algèbre',algebre:'Algèbre',geo:'Géométrie',geometrie:'Géométrie',statistiques:'Stats & Proba',stat:'Stats & Proba',fonc:'Fonctions',fonctions:'Fonctions'};
-  const label=labels[q.theme]||q.theme;
-  const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
-  div.innerHTML=`${elioSVG()}<div class="msg-bubble"><div class="msg-exercise"><div class="exercise-topic">${label} • Q${i+1}/20</div><div>${escH(q.question)}</div><div class="diag-bar"><div class="diag-bar-fill" style="width:${(i/20)*100}%"></div></div></div></div>`;
-  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+  state.diagIndex=i;
+  const q=state.diagQuestions[i];
+  state.currentExercise=q;
+  const pct=Math.round((i/state.diagQuestions.length)*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-count').textContent=`${i+1}/${state.diagQuestions.length}`;
+  const intro=i===0?'Voici ta première question :':i<5?'Continue !':`Question ${i+1}/20 :`;
+  showSpeech(intro, {topic:q.topic||q.theme, question:q.question, difficulty:q.difficulty||2});
 }
 
 async function processDiagAnswer(answer){
-  const q=state.diagQuestions[state.diagIndex];showTyping();
+  const q=state.diagQuestions[state.diagIndex];
+  showTypingBubble();
+  const evalPrompt=`Évalue cette réponse brevet.
+Question: ${q.question}
+Réponse attendue: ${q.expected}
+Réponse élève: ${answer}
+Réponds UNIQUEMENT avec ce JSON: {"correct":true/false,"partial":0.0-1.0,"comment":"feedback max 15 mots"}
+Sois souple sur les équivalents.`;
   try{
-    const resp=await callAPI([{role:'user',content:EVAL_DIAG(q.question,q.expected,answer)}],ELIO_SYSTEM,200);
-    hideTyping();
-    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();const result=JSON.parse(clean);
-    const isCorrect=result.correct||result.partial>=0.7;const score=result.correct?1:(result.partial||0);
-    const theme=q.theme==='algebre'?'alg':q.theme==='geometrie'?'geo':q.theme==='fonctions'?'fonc':q.theme==='statistiques'?'stat':q.theme;
-    state.diagScores[theme]=state.diagScores[theme]||[];state.diagScores[theme].push(score);
-    if(isCorrect)state.correctCount++;state.exercicesCount++;document.getElementById('stat-exos').textContent=state.exercicesCount;
-    updateTopicFromDiag(theme,score);
-    const msgs=document.getElementById('messages');const fb=document.createElement('div');
-    fb.className=isCorrect?'feedback-correct':'feedback-wrong';fb.style.marginLeft='46px';
-    fb.textContent=(isCorrect?'✅ ':'❌ ')+result.comment;msgs.appendChild(fb);msgs.scrollTop=msgs.scrollHeight;
-    await sleep(500);askDiagQ(state.diagIndex+1);
-  }catch(e){hideTyping();console.error(e);askDiagQ(state.diagIndex+1)}
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,200);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const result=JSON.parse(clean);
+    const isCorrect=result.correct||result.partial>=0.7;
+    const score=result.correct?1:(result.partial||0);
+    const theme=normalizeTheme(q.theme);
+    if(!state.diagScores[theme])state.diagScores[theme]=[];
+    state.diagScores[theme].push(score);
+    if(isCorrect){
+      elioBounce();
+      showFeedback(true,'Bonne réponse ! ✅',result.comment);
+    } else {
+      elioShake();
+      showFeedback(false,'Pas tout à fait ❌',result.comment+' La réponse était : '+q.expected);
+    }
+  }catch(e){
+    askDiagQuestion(state.diagIndex+1);
+  }
 }
 
 async function finishDiagnostic(){
-  state.phase='plan';document.getElementById('stat-phase').textContent='Plan';document.getElementById('diag-counter').textContent='';state.awaitingAnswer=false;
-  const scores=computeScores();updateAllBars(scores);
-  state.trainingPlan=scores;state.diagScoresInitial=JSON.parse(JSON.stringify(scores));const lvl=getLevelFromScore(Object.values(scores).reduce((a,b)=>a+b,0)/5);
-  document.getElementById('stat-level').textContent=lvl.emoji+' '+lvl.title;
-  document.getElementById('stat-level').style.color=lvl.color;updateStats();
-  addElioMsg(`Diagnostic terminé ! J'analyse tout ça... Je prépare ton plan perso.`);
-  await sleep(1200);
-  showPlanScreen(scores);
-}
-
-function showPlanScreen(scores){
-  document.getElementById('plan-screen').classList.add('show');
-  document.getElementById('plan-title').textContent = `Super boulot ${state.studentName} ! 💪`;
-  buildDayPicker();
-  buildScoresGrid(scores);
-}
-
-function buildScoresGrid(scores){
-  const themes=[{k:'calcul',l:'Calcul',c:'var(--green)'},{k:'alg',l:'Algèbre',c:'var(--blue)'},{k:'geo',l:'Géométrie',c:'var(--accent)'},{k:'stat',l:'Stats',c:'var(--amber)'},{k:'fonc',l:'Fonctions',c:'#EC4899'}];
-  const grid=document.getElementById('scores-grid');
-  const avgScore=Object.values(scores).reduce((a,b)=>a+b,0)/5;
-  const globalLvl=getLevelFromScore(avgScore);
-  grid.innerHTML=`<div class="score-card" style="grid-column:1/-1;background:rgba(245,200,66,0.08);border:1px solid rgba(245,200,66,0.2)">
-    <div class="score-val" style="color:${globalLvl.color}">${globalLvl.emoji} ${globalLvl.title}</div>
-    <div class="score-label">${globalLvl.msg}</div>
-  </div>`+themes.map(t=>{
-    const v=scores[t.k];const lvl=getLevelFromScore(v);
-    return `<div class="score-card"><div class="score-val" style="color:${t.c}">${v}%</div><div class="score-label">${lvl.emoji} ${t.l}</div></div>`;
-  }).join('');
-}
-
-function buildDayPicker(){
-  const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  const today=new Date().getDay();
-  const picker=document.getElementById('day-picker');
-  picker.innerHTML=days.map((d,i)=>{
-    const dayIdx=(i+1)%7;
-    const isToday=dayIdx===today;
-    return `<div class="day-btn${isToday?' selected':''}" onclick="toggleDay(this,${i})" data-day="${i}">
-      <div class="day-name">${d}</div>
-      <div class="day-num">${isToday?'Auj.':''}</div>
-    </div>`;
-  }).join('');
-  updateConfirmBtn();
-}
-
-function toggleDay(el,i){
-  el.classList.toggle('selected');
-  updateConfirmBtn();
-}
-
-function updateConfirmBtn(){
-  const selected=document.querySelectorAll('.day-btn.selected').length;
-  document.getElementById('btn-confirm-days').disabled=selected===0;
-  document.getElementById('btn-confirm-days').textContent=selected>0?`Générer mon plan (${selected} jours) →`:'Choisis au moins un jour';
-}
-
-async function confirmDays(){
-  const days=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  const selectedDays=Array.from(document.querySelectorAll('.day-btn.selected')).map(el=>days[parseInt(el.dataset.day)]);
-  state.selectedDays=selectedDays;
-  document.getElementById('btn-confirm-days').textContent='Elio prépare ton plan...';
-  document.getElementById('btn-confirm-days').disabled=true;
-
-  const scores=state.trainingPlan||computeScores();
-  const weakThemes=Object.entries(scores).sort((a,b)=>a[1]-b[1]).map(([k])=>k);
-  const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
-
-  // Build plan: distribute weak themes across days
-  const plan={};
-  selectedDays.forEach((day,i)=>{
-    plan[day]=themeNames[weakThemes[i%weakThemes.length]];
-  });
-  state.weekPlan=plan;
-
-  // Show week plan
-  document.getElementById('step-days').style.display='none';
-  document.getElementById('step-plan').style.display='block';
-  document.getElementById('plan-subtitle').textContent='Ton programme personnalisé — basé sur tes points faibles';
-
-  const today=new Date().toLocaleDateString('fr-FR',{weekday:'long'});
-  const todayCap=today.charAt(0).toUpperCase()+today.slice(1);
-  const rows=document.getElementById('week-plan-rows');
-  rows.innerHTML=Object.entries(plan).map(([day,theme])=>{
-    const isToday=day.toLowerCase()===todayCap.toLowerCase()||day===todayCap;
-    return `<div class="plan-day-row${isToday?' today':''}">
-      <div class="plan-day-label">${day}</div>
-      <div class="plan-day-theme">${theme}</div>
-      <div class="plan-day-badge ${isToday?'badge-today':'badge-focus'}">${isToday?"Aujourd'hui":'À faire'}</div>
-    </div>`;
-  }).join('');
-
-  // Check if today is a session day
-  const todayInPlan=Object.keys(plan).some(d=>d.toLowerCase()===todayCap.toLowerCase());
-  const btn=document.getElementById('btn-today-session');
-  if(todayInPlan){
-    const todayTheme=plan[todayCap]||Object.values(plan)[0];
-    btn.textContent=`🎯 Commencer — ${todayTheme}`;
-    state.todayTheme=todayTheme;
-  } else {
-    btn.textContent=`🎯 Commencer une session`;
-    state.todayTheme=Object.values(plan)[0];
+  state.diagDone=true;
+  state.phase='idle';
+  document.getElementById('progress-top').style.display='none';
+  // Compute scores
+  const scores=computeScores();
+  state.scores=scores;
+  state.xp+=50;
+  saveProgress();
+  // Show plan
+  const planPrompt=`Tu es Elio. Diagnostic terminé pour ${state.studentName} (${state.studentLevel}).
+Résultats : Calcul ${scores.calcul}%, Algèbre ${scores.alg}%, Géométrie ${scores.geo}%, Fonctions ${scores.fonc}%, Stats ${scores.stat}%
+Présente les résultats brièvement et annonce le plan (thème le plus faible en premier). Max 120 mots. Ton naturel de grand frère.`;
+  showTypingBubble();
+  try{
+    const resp=await callAPI([{role:'user',content:planPrompt}],ELIO_SYSTEM,400);
+    const lvl=getLevelData();
+    showSpeech(resp);
+    document.getElementById('answer-input').disabled=true;
+    document.getElementById('btn-send').disabled=true;
+    state.trainingPlan=scores;
+    state.todayTheme=getWeakTheme();
+    updateHomeScreen();
+    await sleep(4000);
+    // Show session end (diagnostic)
+    showSessionEndScreen(state.diagQuestions.length, 
+      Math.round((state.diagQuestions.filter((_,i)=>{
+        const theme=normalizeTheme(state.diagQuestions[i]?.theme||'');
+        const arr=state.diagScores[theme]||[];
+        return arr[i]>=0.7;
+      }).length/state.diagQuestions.length)*100),
+      50);
+  }catch(e){
+    showSpeech('Diagnostic terminé ! Je prépare ton plan...');
+    state.trainingPlan=computeScores();
+    updateHomeScreen();
   }
 }
 
-function startTodaySession(){
-  document.getElementById('plan-screen').classList.remove('show');
+// ============================================
+// TRAINING
+// ============================================
+async function startTraining(){
   state.phase='training';
-  state.sessionExoCount=0;
+  state.sessionExos=0;
   state.sessionCorrect=0;
   state.sessionStart=Date.now();
   state.explainedThemes={};
-  document.getElementById('stat-phase').textContent='Entraînement';
-  addElioMsg(`C'est parti ! Session de ${state.todayTheme||'maths'} — 10 exercices. Allez ! 🎯`);
-  startTraining(state.trainingPlan||computeScores());
-}
-
-function backToPlan(){
+  document.getElementById('progress-top').style.display='flex';
+  document.getElementById('answer-input').disabled=false;
+  document.getElementById('btn-send').disabled=false;
   document.getElementById('session-end').classList.remove('show');
-  document.getElementById('plan-screen').classList.add('show');
+  showTypingBubble();
+  await generateExercise();
 }
 
-function computeScores(){const avg=(arr)=>arr&&arr.length?Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*100):0;return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),stat:avg(state.diagScores.stat),fonc:avg(state.diagScores.fonc)}}
-function computeLevel(s){const avg=Object.values(s).reduce((a,b)=>a+b,0)/5;return getLevelFromScore(avg).title}
-
-function getLevelFromScore(score){
-  if(score>=95)return{level:7,emoji:'👑',title:'Grand Maître',color:'#F5C842',msg:"Unstoppable. GG WP."};
-  if(score>=85)return{level:6,emoji:'💎',title:'Légende',color:'#A855F7',msg:"Le brevet tremble devant toi !"};
-  if(score>=71)return{level:5,emoji:'🔥',title:'Élite',color:'#F97316',msg:"Sérieux, t'es en feu !"};
-  if(score>=56)return{level:4,emoji:'🧙',title:'Mage',color:'#F5C842',msg:"Tu maîtrises les sorts de base !"};
-  if(score>=41)return{level:3,emoji:'🛡️',title:'Guerrier',color:'#34D399',msg:"Tu tiens bon, continue !"};
-  if(score>=21)return{level:2,emoji:'⚔️',title:'Apprenti',color:'#60A5FA',msg:"Les bases commencent à rentrer !"};
-  return{level:1,emoji:'🥚',title:'Rookie',color:'#9CA3AF',msg:"T'as posé les bases, c'est un début !"};
-}
-
-function getScoreLevel(score){return getLevelFromScore(score)}
-function buildPlanCard(s){
-  const themes=[{k:'calcul',l:'Calcul',c:'var(--green)'},{k:'alg',l:'Algèbre',c:'var(--blue)'},{k:'geo',l:'Géométrie',c:'var(--accent)'},{k:'stat',l:'Stats & Proba',c:'var(--amber)'},{k:'fonc',l:'Fonctions',c:'#EC4899'}].sort((a,b)=>s[a.k]-s[b.k]);
-  let h=`<div class="plan-card"><div class="plan-card-title">📋 Ton plan</div>`;
-  themes.forEach(t=>{const v=s[t.k];const e=v>=75?'✅':v>=50?'⚠️':'🔴';h+=`<div class="plan-theme"><div><div class="plan-theme-name">${e} ${t.l}</div><div class="plan-bar"><div class="plan-bar-fill" style="width:${v}%;background:${t.c}"></div></div></div><div class="plan-theme-score">${v}%</div></div>`});
-  return h+`</div>`;
-}
-
-async function startTraining(scores){
+async function generateExercise(){
+  const scores=state.trainingPlan||state.scores;
   const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
-  const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
+  const themeNames={calcul:'Calcul numérique',alg:'Algèbre',geo:'Géométrie',fonc:'Fonctions',stat:'Stats & Proba'};
   const firstTheme=weak[0];
   const firstScore=scores[firstTheme]||0;
 
-  // If score < 50% and not already explained this theme this session, explain first
-  if(firstScore<50 && !state.explainedThemes){state.explainedThemes={};}
-  if(firstScore<50 && state.explainedThemes && !state.explainedThemes[firstTheme]){
+  // Explain if needed
+  if(firstScore<50&&!state.explainedThemes[firstTheme]){
     state.explainedThemes[firstTheme]=true;
-    state.phase='explanation';
-    showTyping();
+    const explainPrompt=`Tu es Elio. Le thème "${themeNames[firstTheme]}" est à ${firstScore}% — point faible.
+Mini-leçon en 3 parties :
+📖 Concept (2-3 lignes)
+✏️ Exemple résolu
+❓ Question de contrôle
+Max 150 mots. Ton naturel.`;
     try{
-      const resp=await callAPI([{role:'user',content:EXPLAIN_PROMPT(state.studentName,themeNames[firstTheme],firstScore)}],ELIO_SYSTEM,600);
-      hideTyping();
-      state.pendingExplanationTheme=firstTheme;
-      state.pendingScores=scores;
-      state.awaitingAnswer=true;
-      state.phase='explanation_check';
-      addElioMsg(resp);
-    }catch(e){
-      hideTyping();
-      doStartExercise(scores,weak);
-    }
-    return;
+      const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,500);
+      state.phase='explanation';
+      showSpeech(resp);
+      return;
+    }catch(e){}
   }
-  doStartExercise(scores,weak);
-}
 
-async function doStartExercise(scores,weak){
-  state.phase='training';
-  showTyping();
+  const exPrompt=`Tu es Elio. Génère UN exercice de maths brevet adapté.
+Points faibles : ${weak.map(k=>themeNames[k]).join(', ')}
+Chapitres étudiés : ${[...state.checkedChapters].join(', ')}
+Niveau : ${state.studentLevel||'3e'}
+Réponds UNIQUEMENT avec ce JSON :
+{"type":"exercice","topic":"nom","difficulty":1-5,"question":"énoncé","expected":"réponse exacte","hint":"indice"}`;
   try{
-    const resp=await callAPI([{role:'user',content:EXERCISE_PROMPT(state.studentName,weak,scores)}],ELIO_SYSTEM,400);
-    hideTyping();const ex=parseExercise(resp);
-    if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||`Allez, premier exo ! 🎯`,ex);updateHint(ex.hint)}
-    else addElioMsg(resp);
-  }catch(e){hideTyping();addElioMsg(`C'est parti !`)}
-}
-
-
-function openDashboard(){
-  document.getElementById('dashboard-screen').classList.add('show');
-  renderDashboard();
-}
-
-function closeDashboard(){
-  document.getElementById('dashboard-screen').classList.remove('show');
-}
-
-function renderDashboard(){
-  const scores=state.trainingPlan||{calcul:0,alg:0,geo:0,stat:0,fonc:0};
-  const initial=state.diagScoresInitial||scores;
-  const history=state.sessionHistory||[];
-  const sessions=state.sessionSessions||0;
-  const totalExos=history.reduce((a,s)=>a+s.exos,0);
-
-  // KPIs
-  document.getElementById('dash-sessions').textContent=sessions;
-  document.getElementById('dash-exos').textContent=totalExos;
-  const avgInitial=Object.values(initial).reduce((a,b)=>a+(b||0),0)/5;
-  const avgNow=Object.values(scores).reduce((a,b)=>a+(b||0),0)/5;
-  const delta=Math.round(avgNow-avgInitial);
-  const deltaEl=document.getElementById('dash-progress');
-  deltaEl.textContent=(delta>=0?'+':'')+delta+'%';
-  deltaEl.style.color=delta>0?'var(--green)':delta<0?'var(--red)':'var(--muted)';
-  // Show current level in dashboard
-  const curLvl=getLevelFromScore(avgNow);
-  const lvlBanner=document.getElementById('dash-level-banner');
-  if(lvlBanner){
-    lvlBanner.innerHTML=`<span style="font-size:28px">${curLvl.emoji}</span> <span style="font-size:16px;font-weight:700;color:${curLvl.color}">${curLvl.title}</span> <span style="font-size:12px;color:var(--muted);margin-left:8px">${curLvl.msg}</span>`;
-  }
-
-  // Theme compare
-  const themes=[{k:'calcul',l:'Calcul'},{k:'alg',l:'Algèbre'},{k:'geo',l:'Géométrie'},{k:'stat',l:'Stats'},{k:'fonc',l:'Fonctions'}];
-  const tc=document.getElementById('theme-compare');
-  tc.innerHTML=themes.map(t=>{
-    const init=Math.round(initial[t.k]||0);
-    const now=Math.round(scores[t.k]||0);
-    const d=now-init;
-    const dClass=d>0?'delta-pos':d<0?'delta-neg':'delta-zero';
-    const dText=(d>0?'+':'')+d+'%';
-    return `<div class="theme-compare-row">
-      <div class="theme-compare-name">${t.l}</div>
-      <div class="theme-bars">
-        <div class="theme-bar-row">
-          <div class="theme-bar-label" style="font-size:9px">Départ</div>
-          <div class="theme-bar-track"><div class="theme-bar-fill-init" style="width:${init}%"></div></div>
-          <div class="theme-bar-pct" style="color:var(--muted)">${init}%</div>
-        </div>
-        <div class="theme-bar-row">
-          <div class="theme-bar-label" style="font-size:9px">Maintenant</div>
-          <div class="theme-bar-track"><div class="theme-bar-fill-now" style="width:${now}%"></div></div>
-          <div class="theme-bar-pct" style="color:var(--green)">${now}%</div>
-        </div>
-      </div>
-      <div class="theme-delta ${dClass}">${dText}</div>
-    </div>`;
-  }).join('');
-
-  // Chart
-  renderProgressChart(history);
-
-  // Session list
-  const sl=document.getElementById('session-list');
-  if(history.length===0){
-    sl.innerHTML='<div class="no-data">Aucune session encore — commence ta première session !</div>';
-  } else {
-    sl.innerHTML=[...history].reverse().map(s=>`
-      <div class="session-row">
-        <div>
-          <div class="session-row-theme">${s.theme}</div>
-          <div class="session-row-date">${s.date}</div>
-        </div>
-        <div class="session-row-score">${s.score}% — ${s.exos} exos</div>
-      </div>`).join('');
+    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,400);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const ex=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    state.currentExercise=ex;
+    const n=state.sessionExos+1;
+    document.getElementById('progress-fill').style.width=`${(n/10)*100}%`;
+    document.getElementById('progress-count').textContent=`${n}/10`;
+    showSpeech(`Exercice ${n}/10 — allez ! 💪`, ex);
+  }catch(e){
+    showSpeech('Petit bug 😅 Tape "suivant" pour continuer.');
   }
 }
 
-function renderProgressChart(history){
-  const svg=document.getElementById('progress-chart');
-  if(!history||history.length<2){
-    svg.innerHTML='<text x="290" y="90" font-family="system-ui" font-size="13" fill="#7B88A0" text-anchor="middle">Complète 2 sessions pour voir le graphique</text>';
-    return;
+async function processTrainingAnswer(answer){
+  if(!state.currentExercise)return;
+  showTypingBubble();
+  const evalPrompt=`Tu es Elio. Évalue la réponse.
+Question: ${state.currentExercise.question}
+Réponse attendue: ${state.currentExercise.expected}
+Réponse élève: ${answer}
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"feedback":"explication max 60 mots","encouragement":"phrase courte"}`;
+  try{
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,300);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const result=JSON.parse(clean);
+    if(result.correct){
+      elioBounce();
+      state.sessionCorrect++;
+      addXP(10);
+      updateTopicScore(state.currentExercise.topic,true);
+    } else {
+      elioShake();
+      updateTopicScore(state.currentExercise.topic,false);
+    }
+    state.sessionExos++;
+    state.totalExos++;
+    showFeedback(result.correct,result.correct?'Bonne réponse ! ✅':'Pas tout à fait ❌',result.feedback+' '+result.encouragement);
+  }catch(e){
+    state.sessionExos++;
+    state.totalExos++;
+    showFeedback(true,'Continue !','');
   }
-  const W=580,H=160,pad=40;
-  const scores=history.map(s=>s.score);
-  const minS=0,maxS=100;
-  const pts=scores.map((s,i)=>{
-    const x=pad+(i/(scores.length-1))*(W-pad*2);
-    const y=H-pad-(s-minS)/(maxS-minS)*(H-pad*2);
-    return [Math.round(x),Math.round(y)];
-  });
-
-  let path=`M${pts[0][0]},${pts[0][1]}`;
-  pts.slice(1).forEach(([x,y])=>{ path+=` L${x},${y}`; });
-
-  const dots=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="4" fill="#F5C842"/><text x="${x}" y="${y-10}" font-family="system-ui" font-size="10" fill="#F5C842" text-anchor="middle">${scores[i]}%</text>`).join('');
-  const labels=history.map((s,i)=>{
-    const x=pad+(i/(scores.length-1))*(W-pad*2);
-    return `<text x="${Math.round(x)}" y="${H-8}" font-family="system-ui" font-size="10" fill="#7B88A0" text-anchor="middle">${s.date.slice(0,5)}</text>`;
-  }).join('');
-
-  // Grid lines
-  const grids=[25,50,75,100].map(v=>{
-    const y=Math.round(H-pad-(v-minS)/(maxS-minS)*(H-pad*2));
-    return `<line x1="${pad}" y1="${y}" x2="${W-pad}" y2="${y}" stroke="#2A3347" stroke-width="0.5"/><text x="${pad-4}" y="${y+4}" font-family="system-ui" font-size="9" fill="#7B88A0" text-anchor="end">${v}%</text>`;
-  }).join('');
-
-  svg.innerHTML=grids+`<path d="${path}" fill="none" stroke="#F5C842" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`+dots+labels;
 }
 
+// ============================================
+// FEEDBACK
+// ============================================
+function showFeedback(correct, title, text){
+  const overlay=document.getElementById('feedback-overlay');
+  overlay.className='feedback-overlay show '+(correct?'feedback-correct-bg':'feedback-wrong-bg');
+  document.getElementById('feedback-emoji').textContent=correct?'🎉':'😅';
+  document.getElementById('feedback-title').textContent=title;
+  document.getElementById('feedback-text').textContent=text;
+  document.getElementById('answer-input').value='';
+}
 
-function showSessionEnd(){
-  const exos=state.sessionExoCount||0;
-  const correct=state.sessionCorrect||0;
-  const score=exos>0?Math.round((correct/exos)*100):0;
-  const mins=Math.round((Date.now()-(state.sessionStart||Date.now()))/60000);
+function nextQuestion(){
+  document.getElementById('feedback-overlay').classList.remove('show');
+  document.getElementById('feedback-overlay').className='feedback-overlay';
+  if(state.phase==='diagnostic'){
+    askDiagQuestion(state.diagIndex+1);
+  } else if(state.phase==='explanation'){
+    state.phase='training';
+    generateExercise();
+  } else if(state.phase==='training'){
+    if(state.sessionExos>=10){
+      const score=Math.round((state.sessionCorrect/state.sessionExos)*100);
+      const xpGained=state.sessionCorrect*10+20;
+      addXP(xpGained);
+      state.sessions++;
+      saveProgress();
+      showSessionEndScreen(state.sessionExos,score,xpGained);
+    } else {
+      generateExercise();
+    }
+  }
+}
+
+function showSessionEndScreen(exos, score, xpGained){
+  document.getElementById('answer-input').disabled=true;
+  document.getElementById('btn-send').disabled=true;
+  document.getElementById('progress-top').style.display='none';
+  const lvl=getLevelData();
+  const emoji=score>=80?'🏆':score>=60?'🎯':'⚔️';
+  document.getElementById('end-emoji').textContent=emoji;
+  document.getElementById('end-title').textContent=lvl.emoji+' '+lvl.title+' — Session terminée !';
+  document.getElementById('end-sub').textContent=score>=80?'T\'as cartonné ! 🔥':score>=60?'Bonne session, continue !':'Bien joué d\'avoir bossé !';
   document.getElementById('end-exos').textContent=exos;
   document.getElementById('end-score').textContent=score+'%';
-  document.getElementById('end-time').textContent=mins+' min';
-  const lvlData=getLevelFromScore(score);
-  const msg=score>=80?'T\'as cartonné aujourd\'hui ! 🔥':score>=60?'Bonne session, continue comme ça !':'Bien joué d\'avoir bossé — ça va venir !';
-  document.getElementById('end-sub').textContent=msg;
-  document.getElementById('end-title').textContent=lvlData.emoji+' '+lvlData.title+' — Session terminée !';
-  // Save session to history
-  if(!state.sessionHistory)state.sessionHistory=[];
-  state.sessionHistory.push({
-    date: new Date().toLocaleDateString('fr-FR'),
-    theme: state.todayTheme||'Maths',
-    exos: exos,
-    score: score,
-    timestamp: Date.now()
-  });
-  logSessionToSupabase(state.trainingPlan||{}, exos, correct, mins, state.todayTheme||'Maths');
+  document.getElementById('end-xp').textContent='+'+xpGained;
   document.getElementById('session-end').classList.add('show');
-  state.sessionSessions=(state.sessionSessions||0)+1;
-  state.sessionExoCount=0;state.sessionCorrect=0;if(!state.sessionHistory)state.sessionHistory=[];if(!state.diagScoresInitial)state.diagScoresInitial=JSON.parse(JSON.stringify(state.diagScores));
 }
 
-async function sendMessage(){
-  const input=document.getElementById('user-input');const text=input.value.trim();if(!text)return;
-  input.value='';addUserMsg(text);document.getElementById('send-btn').disabled=true;
-  if(state.phase==='diagnostic'&&state.awaitingAnswer){state.awaitingAnswer=false;await processDiagAnswer(text);document.getElementById('send-btn').disabled=false;return}
+function endSession(){
+  document.getElementById('session-end').classList.remove('show');
+  state.phase='idle';
+  saveProgress();
+  updateHomeScreen();
+  switchScreen('home');
+}
 
-  if(state.phase==='explanation_check'&&state.awaitingAnswer){
-    state.awaitingAnswer=false;showTyping();
-    // Extract the question from last Elio message
-    const msgs=document.getElementById('messages');
-    const elioMsgs=msgs.querySelectorAll('.message.elio .msg-bubble span');
-    const lastMsg=elioMsgs[elioMsgs.length-1]?.textContent||'';
-    const questionMatch=lastMsg.match(/❓[^:]*:\s*(.+)/);
-    const question=questionMatch?questionMatch[1]:'la question de contrôle';
-    try{
-      const resp=await callAPI([{role:'user',content:EXPLAIN_CHECK_PROMPT(question,'réponse correcte sur le concept',text)}],ELIO_SYSTEM,200);
-      hideTyping();
-      const clean=resp.replace(/\`\`\`json|\`\`\`/g,'').replace(/^\s*json\s*/i,'').trim();
-      const result=JSON.parse(clean);
-      const themeNames={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',stat:'Stats & Proba',fonc:'Fonctions'};
-      if(result.ready||result.correct){
-        addElioMsg(result.feedback+' ✅ Bien joué ! On passe aux exercices maintenant.');
-        await sleep(800);
-        state.phase='training';
-        const scores=state.pendingScores||state.trainingPlan||computeScores();
-        const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
-        await doStartExercise(scores,weak);
-      } else {
-        addElioMsg(result.feedback+' Pas grave — voyons ça autrement.');
-        await sleep(600);
-        // Re-explain differently
-        const theme=state.pendingExplanationTheme||'calcul';
-        const score=state.pendingScores?state.pendingScores[theme]:30;
-        showTyping();
-        const resp2=await callAPI([{role:'user',content:`Tu es Elio. Réexplique le thème "${themeNames[theme]}" différemment, avec un autre exemple. L'élève n'a pas compris la première fois. Sois encore plus simple et concret. Max 150 mots.`}],ELIO_SYSTEM,400);
-        hideTyping();
-        state.awaitingAnswer=true;
-        addElioMsg(resp2);
-      }
-    }catch(e){
-      hideTyping();
+function exitSession(){
+  state.phase='idle';
+  document.getElementById('progress-top').style.display='none';
+  document.getElementById('answer-input').disabled=true;
+  document.getElementById('btn-send').disabled=true;
+  showSpeech('Session interrompue. Reviens quand tu veux ! 💪');
+  switchScreen('home');
+}
+
+// ============================================
+// ANSWER
+// ============================================
+async function submitAnswer(){
+  const input=document.getElementById('answer-input');
+  const answer=input.value.trim();
+  if(!answer)return;
+  input.value='';
+  document.getElementById('btn-send').disabled=true;
+  if(state.phase==='diagnostic'){
+    await processDiagAnswer(answer);
+  } else if(state.phase==='training'||state.phase==='explanation'){
+    if(state.phase==='explanation'){
       state.phase='training';
-      const scores=state.pendingScores||state.trainingPlan||computeScores();
-      const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
-      await doStartExercise(scores,weak);
     }
-    document.getElementById('send-btn').disabled=false;
-    return;
+    await processTrainingAnswer(answer);
   }
-  if(state.phase==='training'&&state.awaitingAnswer&&state.currentExercise){
-    state.awaitingAnswer=false;showTyping();
-    try{
-      const resp=await callAPI([{role:'user',content:EVAL_TRAINING(state.currentExercise.question,state.currentExercise.expected,text)}],ELIO_SYSTEM,300);
-      hideTyping();const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').replace(/^\s*json\s*/i,'').trim();const result=JSON.parse(clean);
-      if(result.correct)state.correctCount++;state.exercicesCount++;document.getElementById('stat-exos').textContent=state.exercicesCount;
-      updateTopicScore(state.currentExercise.topic,result.correct);updateStats();
-      saveExercise(state.currentExercise,text,result.correct,result.feedback);
-      const msgs=document.getElementById('messages');const fb=document.createElement('div');
-      fb.className=result.correct?'feedback-correct':'feedback-wrong';fb.style.marginLeft='46px';
-      fb.innerHTML=(result.correct?'✅ ':'❌ ')+escH(result.feedback)+'<br><em style="opacity:0.7">'+escH(result.encouragement)+'</em>';
-      msgs.appendChild(fb);msgs.scrollTop=msgs.scrollHeight;
-      state.sessionExoCount=(state.sessionExoCount||0)+1;
-      state.sessionCorrect=(state.sessionCorrect||0)+(result.correct?1:0);
-      if(state.sessionExoCount>=10){
-        await sleep(1000);showSessionEnd();
-      } else {
-        await sleep(1500);await startTraining(state.trainingPlan||computeScores());
-      }
-    }catch(e){hideTyping();addElioMsg(`Bonne réponse, on continue !`)}
-    document.getElementById('send-btn').disabled=false;return;
+  document.getElementById('btn-send').disabled=false;
+}
+
+function handleAnswerKey(e){if(e.key==='Enter')submitAnswer()}
+
+// ============================================
+// COURSES
+// ============================================
+function buildCoursesList(){
+  const container=document.getElementById('courses-list');
+  container.innerHTML='';
+  Object.entries(PROGRAMME).forEach(([group,chapters])=>{
+    const groupEl=document.createElement('div');
+    groupEl.className='course-group';
+    groupEl.innerHTML=`<div class="course-group-title">${group}</div>`;
+    chapters.forEach(ch=>{
+      const available=state.checkedChapters.has(ch.id);
+      const card=document.createElement('div');
+      card.className='course-card'+(available?'':' locked');
+      card.innerHTML=`<div class="course-card-left"><div class="course-icon">${group.split(' ')[0]}</div><div><div class="course-name">${ch.name}</div><div class="course-level">${ch.level}${available?'':' — Non étudié'}</div></div></div><div class="course-arrow">→</div>`;
+      if(available)card.onclick=()=>openFiche(ch);
+      groupEl.appendChild(card);
+    });
+    container.appendChild(groupEl);
+  });
+}
+
+async function openFiche(chapter){
+  document.getElementById('fiche-title').textContent=chapter.name;
+  document.getElementById('fiche-overlay').classList.add('show');
+  document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading"><span class="fiche-loading-elio">⚔️</span><div>Elio prépare ta fiche...</div></div>`;
+
+  const fichePrompt=`Tu es Elio. Génère une fiche de cours complète sur "${chapter.name}" pour un élève de ${state.studentLevel||'3e'}.
+
+Format ta réponse en JSON :
+{
+  "resume": "résumé du concept en 3-4 phrases claires",
+  "formules": ["formule 1", "formule 2"],
+  "exemple": "exemple résolu pas à pas",
+  "tips": ["astuce 1", "astuce 2", "astuce 3"],
+  "erreurs": ["erreur classique 1", "erreur classique 2"]
+}`;
+
+  try{
+    const resp=await callAPI([{role:'user',content:fichePrompt}],ELIO_SYSTEM,800);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const data=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    renderFiche(data,chapter.name);
+  }catch(e){
+    document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading">Oups, problème technique 😅 Réessaie !</div>`;
   }
-  showTyping();state.conversationHistory.push({role:'user',content:text});
-  const resp=await callAPI(state.conversationHistory,ELIO_SYSTEM,400);
-  hideTyping();state.conversationHistory.push({role:'assistant',content:resp});
-  const ex=parseExercise(resp);
-  if(ex){state.currentExercise=ex;state.awaitingAnswer=true;addElioMsg(getTextWithoutJson(resp)||'Voici un exo :',ex);updateHint(ex.hint)}
-  else addElioMsg(resp);
-  document.getElementById('send-btn').disabled=false;
 }
 
-function handleKey(e){if(e.key==='Enter')sendMessage()}
-
-async function callAPI(messages,system,maxTokens=1000){
-  const r=await fetch(`${BACKEND}/v1/messages`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})});
-  const d=await r.json();return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+function renderFiche(data,name){
+  let html='';
+  html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">📖 Résumé</div><div class="fiche-text">${escH(data.resume)}</div></div>`;
+  if(data.formules&&data.formules.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">🔢 Formules clés</div>`;
+    data.formules.forEach(f=>{html+=`<div class="fiche-tip"><div class="fiche-tip-icon">📌</div><div class="fiche-tip-text" style="font-family:'JetBrains Mono',monospace;font-weight:600">${escH(f)}</div></div>`});
+    html+=`</div>`;
+  }
+  html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">✏️ Exemple</div><div class="fiche-text">${escH(data.exemple)}</div></div>`;
+  if(data.tips&&data.tips.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">💡 Tips d'Elio</div>`;
+    data.tips.forEach(t=>{html+=`<div class="fiche-tip"><div class="fiche-tip-icon">⚡</div><div class="fiche-tip-text">${escH(t)}</div></div>`});
+    html+=`</div>`;
+  }
+  if(data.erreurs&&data.erreurs.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">⚠️ Erreurs classiques</div>`;
+    data.erreurs.forEach(e=>{html+=`<div class="fiche-tip" style="border-left-color:var(--red)"><div class="fiche-tip-icon">❌</div><div class="fiche-tip-text">${escH(e)}</div></div>`});
+    html+=`</div>`;
+  }
+  document.getElementById('fiche-content').innerHTML=html;
 }
 
-function elioSVG(){return`<div class="msg-avatar"><svg width="36" height="36" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="#1C1832"/><path d="M5 40 L5 28 Q5 22 8 20 L14 17 Q20 15 26 17 L32 20 Q35 22 35 28 L35 40Z" fill="#F5C842"/><rect x="17" y="14" width="6" height="8" rx="3" fill="#F5C5A3"/><ellipse cx="20" cy="18" rx="11" ry="12" fill="#F5C5A3"/><path d="M9 14 Q10 6 20 5.5 Q30 6 31 14Z" fill="#1A1A1A"/><path d="M8 15 Q20 12 32 15 Q33 17 32 18 Q20 15 8 18 Q7 17 8 15Z" fill="#111028"/><ellipse cx="15" cy="19" rx="3.5" ry="3" fill="white"/><ellipse cx="25" cy="19" rx="3.5" ry="3" fill="white"/><path d="M11.5 17 Q15 15.5 18.5 17" fill="#F5C5A3" opacity="0.9"/><path d="M21.5 17 Q25 15.5 28.5 17" fill="#F5C5A3" opacity="0.9"/><circle cx="16" cy="19.5" r="2.2" fill="#111"/><circle cx="26" cy="19.5" r="2.2" fill="#111"/><circle cx="15" cy="18.8" r="1" fill="#F5C842"/><circle cx="25" cy="18.8" r="1" fill="#F5C842"/><circle cx="14.2" cy="18.2" r="0.7" fill="white"/><circle cx="24.2" cy="18.2" r="0.7" fill="white"/><path d="M16 25 Q20 28 24 25" stroke="#C0706A" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M23 24.5 Q25 23 24.5 21.5" stroke="#C0706A" stroke-width="1" fill="none" stroke-linecap="round"/><ellipse cx="11" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/><ellipse cx="29" cy="22" rx="4" ry="2.5" fill="#E8907A" opacity="0.3"/></svg></div>`}
-
-function addElioMsg(text,ex=null){
-  const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';
-  let c=`${elioSVG()}<div class="msg-bubble"><span>${escH(text)}</span>`;
-  if(ex){const dots=Array.from({length:5},(_,i)=>`<span class="${i<(ex.difficulty||1)?'active':''}"></span>`).join('');c+=`<div class="msg-exercise"><div class="exercise-topic">${escH(ex.topic||'')}</div><div>${escH(ex.question||'')}</div><div class="difficulty-dots">${dots}</div></div>`}
-  c+=`</div>`;div.innerHTML=c;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+function closeFiche(){
+  document.getElementById('fiche-overlay').classList.remove('show');
 }
-function addUserMsg(text){const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message user';div.innerHTML=`<div class="msg-avatar">👤</div><div class="msg-bubble">${escH(text)}</div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
-function showTyping(){const msgs=document.getElementById('messages');const div=document.createElement('div');div.className='message elio';div.id='typing-indicator';div.innerHTML=`${elioSVG()}<div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight}
-function hideTyping(){const el=document.getElementById('typing-indicator');if(el)el.remove()}
-function updateDiagCounter(){const el=document.getElementById('diag-counter');if(el&&state.phase==='diagnostic')el.textContent=`${state.diagIndex+1}/20`}
-function updateAllBars(s){['calcul','alg','geo','stat','fonc'].forEach(k=>{const p=document.getElementById('p-'+k);const b=document.getElementById('b-'+k);if(p)p.textContent=s[k]+'%';if(b)b.style.width=s[k]+'%';state.topics[k]=s[k]})}
-function updateTopicFromDiag(theme,score){state.topics[theme]=state.topics[theme]||0;const v=Math.min(100,Math.round((state.topics[theme]||0)*0.7+score*100*0.3));state.topics[theme]=v;const p=document.getElementById('p-'+theme);const b=document.getElementById('b-'+theme);if(p)p.textContent=v+'%';if(b)b.style.width=v+'%'}
-const tMap={'calcul':'calcul','algèbre':'alg','géométrie':'geo','statistiques':'stat','probabilités':'stat','fonctions':'fonc'};
-function updateTopicScore(topic,correct){if(!topic)return;const k=Object.keys(tMap).find(t=>topic.toLowerCase().includes(t));if(!k)return;const key=tMap[k];state.topics[key]=correct?Math.min(100,(state.topics[key]||0)+10):Math.max(0,(state.topics[key]||0)-3);const p=document.getElementById('p-'+key);const b=document.getElementById('b-'+key);if(p)p.textContent=state.topics[key]+'%';if(b)b.style.width=state.topics[key]+'%'}
-function updateStats(){if(state.exercicesCount>0){const s=Math.round((state.correctCount/state.exercicesCount)*100);const el=document.getElementById('stat-score');el.textContent=s+'%';el.style.color=s>=70?'var(--green)':s>=40?'var(--amber)':'var(--red)'}}
-function updateHint(hint){if(hint)document.getElementById('hint-box').innerHTML=`<div class="hint-icon">💡</div>${escH(hint)}`}
-function parseExercise(text){try{const m=text.match(/\{[\s\S]*?"type"\s*:\s*"exercice"[\s\S]*?\}/);if(m)return JSON.parse(m[0])}catch(e){}return null}
-function getTextWithoutJson(text){return text.replace(/\{[\s\S]*?"type"\s*:\s*"exercice"[\s\S]*?\}/g,'').trim()}
-async function saveExercise(ex,ans,ok,fb){if(!ex)return;try{await fetch(`${BACKEND}/api/save-exercise`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({student_name:state.studentName,topic:ex.topic||'général',difficulty:ex.difficulty||1,question:ex.question||'',expected_answer:ex.expected||'',student_answer:ans,is_correct:ok,feedback:fb})})}catch(e){}}
+
+// ============================================
+// HELPERS
+// ============================================
+function normalizeTheme(theme){
+  const map={calcul:'calcul',alg:'alg',algebre:'alg',geo:'geo',geometrie:'geo',fonc:'fonc',fonctions:'fonc',stat:'stat',statistiques:'stat'};
+  return map[theme?.toLowerCase()]||theme||'calcul';
+}
+
+function computeScores(){
+  const avg=(arr)=>arr&&arr.length?Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*100):0;
+  return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),fonc:avg(state.diagScores.fonc),stat:avg(state.diagScores.stat)};
+}
+
+const tMap={'calcul':'calcul','algèbre':'alg','géométrie':'geo','statistiques':'stat','probabilités':'stat','fonctions':'fonc','calcul numérique':'calcul','algèbre':'alg'};
+function updateTopicScore(topic,correct){
+  if(!topic)return;
+  const k=Object.keys(tMap).find(t=>topic.toLowerCase().includes(t));
+  if(!k)return;
+  const key=tMap[k];
+  state.scores[key]=correct?Math.min(100,(state.scores[key]||0)+8):Math.max(0,(state.scores[key]||0)-2);
+}
+
+function addXP(amount){
+  state.xp+=amount;
+  saveProgress();
+}
+
+function saveProgress(){
+  localStorage.setItem('educoach_progress',JSON.stringify({
+    xp:state.xp,sessions:state.sessions,totalExos:state.totalExos,
+    streak:state.streak,scores:state.scores,diagDone:state.diagDone,
+    trainingPlan:state.trainingPlan,todayTheme:state.todayTheme
+  }));
+}
+
+function loadProgress(){
+  const saved=localStorage.getItem('educoach_progress');
+  if(saved){
+    const d=JSON.parse(saved);
+    Object.assign(state,d);
+  }
+}
+
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function escH(text){if(!text)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(String(text)));return d.innerHTML}
+
+// Invite token
 const urlParams=new URLSearchParams(window.location.search);
 const inviteToken=urlParams.get('invite');
 async function handleInviteToken(userId){
   if(!inviteToken)return;
   try{
-    const r=await fetch('https://educoach-poc-production.up.railway.app/api/student/accept-invite',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({invite_token:inviteToken,user_id:userId})
-    });
+    const r=await fetch(`${BACKEND}/api/student/accept-invite`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invite_token:inviteToken,user_id:userId})});
     const data=await r.json();
-    if(data.student_id){
-      localStorage.setItem('educoach_student_id',data.student_id);
-      state.studentId=data.student_id;
-    }
-    console.log('invite accepted:', data);
+    if(data.student_id){localStorage.setItem('educoach_student_id',data.student_id);state.studentId=data.student_id;}
   }catch(e){console.log('invite error:',e)}
 }
 if(inviteToken){
-  // Check existing session first
-  sb.auth.getSession().then(({data})=>{
-    if(data?.session?.user){
-      handleInviteToken(data.session.user.id);
-    }
-  });
-  // Also handle new auth events
-  sb.auth.onAuthStateChange(async(event,session)=>{
-    if(session?.user) handleInviteToken(session.user.id);
-  });
+  sb.auth.getSession().then(({data})=>{if(data?.session?.user)handleInviteToken(data.session.user.id)});
+  sb.auth.onAuthStateChange(async(event,session)=>{if(session?.user)handleInviteToken(session.user.id)});
 }
-function escH(text){if(!text)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(text));return d.innerHTML}
 </script>
 </body>
 </html>
