@@ -546,7 +546,7 @@ sb.auth.onAuthStateChange((event,session)=>{
 });
 
 const state={
-  studentName:'',sessionSeconds:0,exercicesCount:0,correctCount:0,
+  studentName:'',studentId:localStorage.getItem('educoach_student_id')||null,sessionSeconds:0,exercicesCount:0,correctCount:0,
   phase:'onboarding',diagQuestions:[],diagIndex:0,sessionStarted:false,
   diagScores:{calcul:[],alg:[],geo:[],stat:[],fonc:[]},
   conversationHistory:[],currentExercise:null,awaitingAnswer:false,
@@ -626,6 +626,27 @@ function startTimer(){
 function triggerPause(){document.getElementById('pause-overlay').classList.add('show');state.pauseSeconds=300;updatePauseCountdown();state.pauseInterval=setInterval(()=>{state.pauseSeconds--;updatePauseCountdown();if(state.pauseSeconds<=0){clearInterval(state.pauseInterval);resumeSession()}},1000)}
 function updatePauseCountdown(){const m=Math.floor(state.pauseSeconds/60).toString().padStart(2,'0');const s=(state.pauseSeconds%60).toString().padStart(2,'0');document.getElementById('pause-countdown').textContent=`${m}:${s}`}
 function resumeSession(){clearInterval(state.pauseInterval);document.getElementById('pause-overlay').classList.remove('show');addElioMsg(`Allez, on reprend ! T'as bien récupéré ? 💪`)}
+
+
+async function logSessionToSupabase(scores, exos, correct, mins, theme){
+  const studentId=state.studentId||localStorage.getItem('educoach_student_id');
+  if(!studentId)return;
+  try{
+    await fetch(`${BACKEND}/api/session/log`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        student_id:studentId,
+        theme:theme,
+        exercises_count:exos,
+        correct_count:correct,
+        score:exos>0?Math.round((correct/exos)*100):0,
+        duration_minutes:mins,
+        scores_snapshot:scores
+      })
+    });
+  }catch(e){console.log('session log error:',e)}
+}
 
 async function startDiagnostic(){
   state.phase='generating';document.getElementById('stat-phase').textContent='Diagnostic';
@@ -986,6 +1007,7 @@ function showSessionEnd(){
     score: score,
     timestamp: Date.now()
   });
+  logSessionToSupabase(state.trainingPlan||{}, exos, correct, mins, state.todayTheme||'Maths');
   document.getElementById('session-end').classList.add('show');
   state.sessionSessions=(state.sessionSessions||0)+1;
   state.sessionExoCount=0;state.sessionCorrect=0;if(!state.sessionHistory)state.sessionHistory=[];if(!state.diagScoresInitial)state.diagScoresInitial=JSON.parse(JSON.stringify(state.diagScores));
@@ -1109,7 +1131,12 @@ async function handleInviteToken(userId){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({invite_token:inviteToken,user_id:userId})
     });
-    console.log('invite accepted:', await r.json());
+    const data=await r.json();
+    if(data.student_id){
+      localStorage.setItem('educoach_student_id',data.student_id);
+      state.studentId=data.student_id;
+    }
+    console.log('invite accepted:', data);
   }catch(e){console.log('invite error:',e)}
 }
 if(inviteToken){
