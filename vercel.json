@@ -1,5 +1,3 @@
-﻿{
-  "outputDirectory": "public",
-  "buildCommand": "",
-  "installCommand": ""
+{
+  "rewrites": [{"source": "/(.*)", "destination": "/educoach_poc.html"}]
 }
