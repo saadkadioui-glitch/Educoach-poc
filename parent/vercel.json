@@ -1,5 +1,1 @@
-{
-  "buildCommand": "",
-  "installCommand": "",
-  "rewrites": [{"source": "/(.*)", "destination": "/index.html"}]
-}
+{\n  "version": 2,\n  "builds": [{"src": "index.html", "use": "@vercel/static"}],\n  "routes": [{"src": "/(.*)", "dest": "/index.html"}]\n}\n

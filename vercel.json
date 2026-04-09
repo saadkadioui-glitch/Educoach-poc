@@ -1,5 +1,1 @@
-{
-  "buildCommand": "",
-  "installCommand": "",
-  "rewrites": [{"source": "/(.*)", "destination": "/educoach_poc.html"}]
-}
+{\n  "version": 2,\n  "builds": [{"src": "educoach_poc.html", "use": "@vercel/static"}],\n  "routes": [{"src": "/(.*)", "dest": "/educoach_poc.html"}]\n}\n
