@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduCoach — Espace Parents</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#F8FAFC;--surface:#FFFFFF;--surface2:#F1F5F9;--border:#E2E8F0;
+    --green:#D4A800;--green-dark:#B8920A;--blue:#7C6FCD;--accent:#0EA5E9;
+    --red:#EF4444;--amber:#F59E0B;--text:#1E293B;--muted:#64748B;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(212,168,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(212,168,0,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  /* AUTH */
+  .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:40px 20px;display:flex;flex-direction:column;align-items:center}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:420px;width:100%;text-align:center;margin:0 auto}
+  .auth-title{font-size:22px;font-weight:700;margin-bottom:6px}
+  .auth-sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+  .auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:22px}
+  .auth-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+  .auth-tab.active{background:var(--green);color:#1C1832}
+  .auth-field{text-align:left;margin-bottom:14px}
+  .auth-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  .auth-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+  .auth-field input:focus{border-color:var(--green)}
+  .btn-auth{width:100%;background:linear-gradient(135deg,var(--green),var(--green-dark));color:white;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px;transition:all 0.2s}
+  .btn-auth:hover{transform:translateY(-1px)}
+  .btn-auth:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+  .divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .btn-google{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
+  .btn-google:hover{border-color:var(--green)}
+  .auth-msg{font-size:12px;margin-top:12px;padding:10px;border-radius:8px;display:none}
+  .auth-msg.error{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);color:var(--red);display:block}
+  .auth-msg.success{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:var(--green);display:block}
+
+  /* APP */
+  .app{display:none;position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 16px}
+  .app.visible{display:block}
+
+  /* HEADER */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green-dark));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo-text{font-weight:700;font-size:16px}
+  .logo-sub{font-size:11px;color:var(--muted)}
+  .user-badge{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:12px;cursor:pointer;transition:all 0.2s}
+  .user-badge:hover{border-color:var(--red);color:var(--red)}
+
+  /* INVITE SECTION */
+  .invite-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+  .invite-title{font-size:16px;font-weight:700;margin-bottom:6px}
+  .invite-sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+  .invite-form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+  .form-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  .form-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s}
+  .form-field input:focus{border-color:var(--green)}
+  .btn-invite{background:var(--green);color:white;padding:10px 20px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap;height:42px;transition:all 0.2s}
+  .btn-invite:hover{background:var(--green-dark)}
+  .btn-invite:disabled{opacity:0.5;cursor:not-allowed}
+
+  /* STUDENT CARDS */
+  .students-title{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+  .student-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+  .student-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .student-name{font-size:18px;font-weight:700}
+  .student-level{display:flex;align-items:center;gap:8px;font-size:13px}
+  .alert-badge{background:rgba(255,92,106,0.15);border:1px solid rgba(255,92,106,0.3);color:var(--red);font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+  .inactive-msg{font-size:12px;color:var(--red);margin-bottom:12px;padding:8px 12px;background:rgba(239,68,68,0.06);border-radius:8px}
+
+  /* KPIs */
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .kpi-card{background:#F8FAFC;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+  .kpi-val{font-size:22px;font-weight:700;color:var(--green);margin-bottom:2px}
+  .kpi-label{font-size:10px;color:var(--muted)}
+
+  /* THEME BARS */
+  .section-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px}
+  .theme-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .theme-name{font-size:12px;width:100px;flex-shrink:0}
+  .bar-track{flex:1;height:8px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+  .bar-pct{font-size:11px;width:36px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--muted)}
+
+  /* CHART */
+  .chart-wrap{margin:14px 0}
+
+  /* REPORT */
+  .report-box{background:rgba(212,168,0,0.06);border:1px solid rgba(212,168,0,0.25);border-radius:12px;padding:14px;margin-top:14px}
+  .report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .report-label{font-size:12px;font-weight:600;color:var(--green)}
+  .btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+  .btn-refresh:hover{border-color:var(--green);color:var(--green)}
+  .report-text{font-size:13px;color:var(--text);line-height:1.6}
+
+  /* NOT INVITED */
+  .not-accepted{background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;color:var(--muted);text-align:center}
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty-emoji{font-size:48px;margin-bottom:16px}
+  .empty-text{font-size:15px}
+
+  /* LOADING */
+  .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+
+  @media(max-width:600px){.invite-form{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div style="font-size:40px;margin-bottom:14px">👨‍👩‍👧</div>
+    <h1 class="auth-title">Espace Parents</h1>
+    <p class="auth-sub">Suivez la progression de votre enfant et gérez son programme avec Elio.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Créer un compte</button>
+    </div>
+
+    <div id="form-login">
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="votre@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+      <button class="btn-auth" id="btn-login" onclick="login()">Se connecter →</button>
+    </div>
+
+    <div id="form-signup" style="display:none">
+      <div class="auth-field"><label>Votre prénom</label><input type="text" id="signup-name" placeholder="Ex: Marie"/></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="votre@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Minimum 6 caractères"/></div>
+      <button class="btn-auth" id="btn-signup" onclick="signup()">Créer mon compte →</button>
+    </div>
+
+    <div class="divider">ou</div>
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">👨‍👩‍👧</div>
+      <div>
+        <div class="logo-text">EduCoach — Espace Parents</div>
+        <div class="logo-sub">Suivez la progression de votre enfant</div>
+      </div>
+    </div>
+    <div class="user-badge" onclick="logout()">
+      <span id="parent-name-display">—</span>
+      <span style="color:var(--muted)">• Déconnexion</span>
+    </div>
+  </div>
+
+  <!-- INVITE -->
+  <div class="invite-card">
+    <div class="invite-title">➕ Ajouter un élève</div>
+    <div class="invite-sub">Invitez votre enfant par email — il recevra un lien pour créer son compte et commencer avec Elio.</div>
+    <div class="invite-form">
+      <div class="form-field">
+        <label>Prénom de l'élève</label>
+        <input type="text" id="student-name-input" placeholder="Ex: Emma"/>
+      </div>
+      <div class="form-field">
+        <label>Email de l'élève</label>
+        <input type="email" id="student-email-input" placeholder="emma@email.com"/>
+      </div>
+      <button class="btn-invite" id="btn-invite" onclick="inviteStudent()">Inviter →</button>
+    </div>
+    <div class="auth-msg" id="invite-msg"></div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div class="students-title">Mes élèves</div>
+  <div id="students-container"><div class="loading">Chargement...</div></div>
+</div>
+
+<script>
+const SUPABASE_URL='https://sosykwzdarjwliilakgk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvc3lrd3pkYXJqd2xpaWxha2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzE0MDMsImV4cCI6MjA4OTE0NzQwM30.wjWRuf4njfTBGEZcbWq6yUmBPBdOvng9B0KV8I1P9bk';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const BACKEND='https://educoach-poc-production.up.railway.app';
+
+let currentUser=null;
+let parentId=null;
+
+// ============================================
+// AUTH
+// ============================================
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-msg').className='auth-msg';
+}
+function showMsg(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='auth-msg '+type}
+
+async function login(){
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value;
+  if(!email||!password){showMsg('auth-msg','Remplis tous les champs.','error');return}
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='Connexion...';
+  const{error}=await sb.auth.signInWithPassword({email,password});
+  btn.disabled=false;btn.textContent='Se connecter →';
+  if(error)showMsg('auth-msg','Email ou mot de passe incorrect.','error');
+}
+
+async function signup(){
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const password=document.getElementById('signup-password').value;
+  if(!name||!email||!password){showMsg('auth-msg','Remplis tous les champs.','error');return}
+  const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='Création...';
+  const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name,role:'parent'}}});
+  btn.disabled=false;btn.textContent='Créer mon compte →';
+  if(error)showMsg('auth-msg','Erreur : '+error.message,'error');
+  else showMsg('auth-msg','Compte créé ! Vérifie ton email.','success');
+}
+
+async function loginGoogle(){
+  await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+}
+
+async function logout(){await sb.auth.signOut();location.reload()}
+
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(session?.user){
+    currentUser=session.user;
+    const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
+    document.getElementById('parent-name-display').textContent=name;
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    await initParent(session.user,name);
+    await loadDashboard();
+  }
+});
+
+// ============================================
+// INIT PARENT
+// ============================================
+async function initParent(user,name){
+  const r=await fetch(`${BACKEND}/api/parent/create`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user_id:user.id,email:user.email,name})
+  });
+  const data=await r.json();
+  parentId=data.parent_id;
+}
+
+// ============================================
+// INVITE STUDENT
+// ============================================
+async function inviteStudent(){
+  if(!parentId){showMsg('invite-msg','Erreur : compte parent non initialisé.','error');return}
+  const name=document.getElementById('student-name-input').value.trim();
+  const email=document.getElementById('student-email-input').value.trim();
+  if(!name||!email){showMsg('invite-msg','Remplis le prénom et l\'email.','error');return}
+  const btn=document.getElementById('btn-invite');btn.disabled=true;btn.textContent='Envoi...';
+  const r=await fetch(`${BACKEND}/api/parent/invite`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({parent_id:parentId,student_name:name,student_email:email})
+  });
+  btn.disabled=false;btn.textContent='Inviter →';
+  if(r.ok){
+    showMsg('invite-msg',`Invitation envoyée à ${email} ! ${name} recevra un lien pour rejoindre EduCoach.`,'success');
+    document.getElementById('student-name-input').value='';
+    document.getElementById('student-email-input').value='';
+    await loadDashboard();
+  } else {
+    showMsg('invite-msg','Erreur lors de l\'invitation. Réessaie.','error');
+  }
+}
+
+// ============================================
+// LOAD DASHBOARD
+// ============================================
+async function loadDashboard(){
+  if(!parentId)return;
+  const container=document.getElementById('students-container');
+  container.innerHTML='<div class="loading">Chargement...</div>';
+  const r=await fetch(`${BACKEND}/api/parent/dashboard/${parentId}`);
+  const data=await r.json();
+  const students=data.students||[];
+  if(students.length===0){
+    container.innerHTML=`<div class="empty-state"><div class="empty-emoji">👨‍👩‍👧</div><div class="empty-text">Aucun élève encore — invitez votre enfant ci-dessus !</div></div>`;
+    return;
+  }
+  container.innerHTML=students.map(s=>renderStudentCard(s)).join('');
+  students.forEach(s=>{
+    if(s.student.invite_accepted){
+      loadReport(s.student.id);
+      renderChart(s.student.id,s.sessions);
+    }
+  });
+}
+
+// ============================================
+// RENDER STUDENT CARD
+// ============================================
+function renderStudentCard(data){
+  const{student,sessions,total_time_minutes,avg_score,sessions_count,last_session,inactive_alert,scores_latest}=data;
+  const lvl=getLevelFromScore(avg_score);
+
+  if(!student.invite_accepted){
+    return `<div class="student-card">
+      <div class="student-header">
+        <div class="student-name">${student.name}</div>
+        <span class="alert-badge">⏳ Invitation en attente</span>
+      </div>
+      <div class="not-accepted">L'invitation a été envoyée à ${student.email}. En attente de connexion.</div>
+    </div>`;
+  }
+
+  const themes=[{k:'calcul',l:'Calcul',c:'#F5C842'},{k:'alg',l:'Algèbre',c:'#7C6FCD'},{k:'geo',l:'Géométrie',c:'#5EEAD4'},{k:'stat',l:'Stats',c:'#FFB547'},{k:'fonc',l:'Fonctions',c:'#EC4899'}];
+  const themeBars=themes.map(t=>{
+    const v=scores_latest[t.k]||0;
+    return `<div class="theme-bar-row">
+      <div class="theme-name">${t.l}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${t.c}"></div></div>
+      <div class="bar-pct">${v}%</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="student-card" id="card-${student.id}">
+    <div class="student-header">
+      <div class="student-name">${student.name}</div>
+      <div class="student-level">
+        <span style="font-size:20px">${lvl.emoji}</span>
+        <span style="color:${lvl.color};font-weight:700">${lvl.title}</span>
+        ${inactive_alert?'<span class="alert-badge">⚠️ Inactif</span>':''}
+      </div>
+    </div>
+    ${inactive_alert?`<div class="inactive-msg">⚠️ ${student.name} ne s'est pas connecté depuis plus de 3 jours. Pensez à l'encourager !</div>`:''}
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-val">${sessions_count}</div><div class="kpi-label">Sessions</div></div>
+      <div class="kpi-card"><div class="kpi-val">${avg_score}%</div><div class="kpi-label">Score moyen</div></div>
+      <div class="kpi-card"><div class="kpi-val">${total_time_minutes} min</div><div class="kpi-label">Temps total</div></div>
+    </div>
+    <div class="section-title">Progression par thème</div>
+    ${themeBars}
+    <div class="chart-wrap">
+      <div class="section-title">Évolution du score</div>
+      <svg width="100%" height="120" viewBox="0 0 560 120" id="chart-${student.id}" xmlns="http://www.w3.org/2000/svg">
+        <text x="280" y="65" font-family="system-ui" font-size="12" fill="#94A3B8" text-anchor="middle">Chargement...</text>
+      </svg>
+    </div>
+    <div class="report-box" id="report-${student.id}">
+      <div class="report-header">
+        <div class="report-label">🤖 Avis d'Elio</div>
+        <button class="btn-refresh" onclick="loadReport('${student.id}')">↻ Actualiser</button>
+      </div>
+      <div class="report-text" id="report-text-${student.id}">Génération en cours...</div>
+    </div>
+  </div>`;
+}
+
+// ============================================
+// LOAD REPORT
+// ============================================
+async function loadReport(studentId){
+  const el=document.getElementById(`report-text-${studentId}`);
+  if(!el)return;
+  el.textContent='Elio analyse les données...';
+  const r=await fetch(`${BACKEND}/api/student/report/${studentId}`);
+  const data=await r.json();
+  if(el)el.textContent=data.report||'Aucune donnée disponible.';
+}
+
+// ============================================
+// RENDER CHART
+// ============================================
+function renderChart(studentId,sessions){
+  const svg=document.getElementById(`chart-${studentId}`);
+  if(!svg)return;
+  if(!sessions||sessions.length<2){
+    svg.innerHTML='<text x="280" y="65" font-family="system-ui" font-size="12" fill="#94A3B8" text-anchor="middle">Au moins 2 sessions nécessaires</text>';
+    return;
+  }
+  const W=560,H=120,pad=30;
+  const scores=[...sessions].reverse().map(s=>s.score||0);
+  const pts=scores.map((s,i)=>{
+    const x=pad+(i/(scores.length-1))*(W-pad*2);
+    const y=H-pad-(s/100)*(H-pad*2);
+    return[Math.round(x),Math.round(y)];
+  });
+  let path=`M${pts[0][0]},${pts[0][1]}`;
+  pts.slice(1).forEach(([x,y])=>path+=` L${x},${y}`);
+  const dots=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="4" fill="#D4A800"/>`).join('');
+  const grids=[25,50,75,100].map(v=>{
+    const y=Math.round(H-pad-(v/100)*(H-pad*2));
+    return `<line x1="${pad}" y1="${y}" x2="${W-pad}" y2="${y}" stroke="#E2E8F0" stroke-width="0.5"/><text x="${pad-4}" y="${y+4}" font-family="system-ui" font-size="9" fill="#94A3B8" text-anchor="end">${v}%</text>`;
+  }).join('');
+  svg.innerHTML=grids+`<path d="${path}" fill="none" stroke="#D4A800" stroke-width="2" stroke-linecap="round"/>`+dots;
+}
+
+// ============================================
+// LEVEL SYSTEM
+// ============================================
+function getLevelFromScore(score){
+  if(score>=95)return{emoji:'👑',title:'Grand Maître',color:'#F5C842'};
+  if(score>=85)return{emoji:'💎',title:'Légende',color:'#A855F7'};
+  if(score>=71)return{emoji:'🔥',title:'Élite',color:'#F97316'};
+  if(score>=56)return{emoji:'🧙',title:'Mage',color:'#F5C842'};
+  if(score>=41)return{emoji:'🛡️',title:'Guerrier',color:'#34D399'};
+  if(score>=21)return{emoji:'⚔️',title:'Apprenti',color:'#60A5FA'};
+  return{emoji:'🥚',title:'Rookie',color:'#9CA3AF'};
+}
+</script>
+</body>
+</html>

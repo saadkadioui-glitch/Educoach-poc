@@ -1,0 +1,8 @@
+﻿@'
+{
+  "version": 2,
+  "routes": [
+    {"src": "/(.*)", "dest": "/educoach_poc.html"}
+  ]
+}
+'@ | Out-File -FilePath vercel.json -Encoding utf8
