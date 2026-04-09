@@ -1,1 +1,1 @@
-{\n  "version": 2,\n  "builds": [{"src": "educoach_poc.html", "use": "@vercel/static"}],\n  "routes": [{"src": "/(.*)", "dest": "/educoach_poc.html"}]\n}\n
+{"version":2,"builds":[{"src":"educoach_poc.html","use":"@vercel/static"}],"routes":[{"src":"/(.*)","dest":"/educoach_poc.html"}]}
