@@ -350,8 +350,14 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
   <!-- SCREEN 1: HOME -->
   <div class="screen active" id="screen-home">
     <div class="home-header">
-      <div class="home-greeting">Salut <span id="home-name">—</span> !</div>
-      <div class="streak-badge">🔥 <span id="home-streak">1</span> jour</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="home-user-emoji" style="font-size:28px">🧑</span>
+        <div class="home-greeting">Salut <span id="home-name">—</span> !</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="streak-badge">🔥 <span id="home-streak">1</span> j</div>
+        <button onclick="openProfile()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif">⚙️ Profil</button>
+      </div>
     </div>
 
     <!-- XP Card -->
@@ -412,8 +418,12 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
       <div class="theme-row"><div class="theme-emoji">📊</div><div class="theme-info"><div class="theme-name">Stats & Proba</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-stat" style="width:0%;background:var(--teal)"></div></div></div><div class="theme-pct" id="tpp-stat">0%</div></div>
     </div>
 
+    <!-- Objectives -->
+    <div class="section-title">OBJECTIFS PAR THÈME</div>
+    <div class="objectives-section" id="objectives-section"></div>
+
     <!-- Badges -->
-    <div class="section-title">BADGES</div>
+    <div class="section-title">MES BADGES</div>
     <div class="badges-grid" id="badges-grid"></div>
   </div>
 
@@ -451,6 +461,12 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
         <!-- Torches -->
         <div class="torch torch-left"><div class="flame"></div></div>
         <div class="torch torch-right"><div class="flame"></div></div>
+      </div>
+
+      <!-- Voice controls -->
+      <div class="voice-controls">
+        <button class="btn-voice" id="btn-tts" onclick="toggleTTS()" title="Voix Elio">🔊 Voix</button>
+        <button class="btn-mic" id="btn-mic" onclick="toggleMic()" title="Répondre à voix haute">🎤 Micro</button>
       </div>
 
       <!-- Progress bar top -->
@@ -1475,6 +1491,275 @@ if(inviteToken){
   sb.auth.getSession().then(({data})=>{if(data?.session?.user)handleInviteToken(data.session.user.id)});
   sb.auth.onAuthStateChange(async(event,session)=>{if(session?.user)handleInviteToken(session.user.id)});
 }
+
+// PROFILE
+const EMOJIS=['🧑','👦','👧','🧒','👨','👩','🧔','👱','🦸','🧙','🧝','🧛','🦊','🐺','🦁','🐯','🦄','🐉','🔥','⚔️','🛡️','🏹','💎','👑'];
+function openProfile(){
+  document.getElementById('profile-overlay').classList.add('show');
+  const p=loadProfileData();
+  document.getElementById('profile-firstname').value=p.firstname||state.studentName||'';
+  document.getElementById('profile-lastname').value=p.lastname||'';
+  document.getElementById('profile-school').value=p.school||'';
+  document.getElementById('profile-emoji-display').textContent=p.emoji||'🧑';
+  if(p.selfLevel)selectSelfLevel(p.selfLevel,false);
+  buildEmojiPicker();
+}
+function closeProfile(){document.getElementById('profile-overlay').classList.remove('show')}
+function buildEmojiPicker(){
+  const grid=document.getElementById('emoji-picker');
+  grid.innerHTML=EMOJIS.map(e=>`<div class="emoji-option" onclick="selectEmoji('${e}')">${e}</div>`).join('');
+}
+function toggleEmojiPicker(){document.getElementById('emoji-picker').classList.toggle('show')}
+function selectEmoji(emoji){document.getElementById('profile-emoji-display').textContent=emoji;document.getElementById('emoji-picker').classList.remove('show')}
+let selectedSelfLevel=null;
+function selectSelfLevel(level,save=true){
+  selectedSelfLevel=level;
+  ['nul','moyen','bien','expert'].forEach(l=>{document.getElementById('sl-'+l)?.classList.toggle('selected',l===level)});
+}
+function saveProfile(){
+  const p={firstname:document.getElementById('profile-firstname').value.trim(),lastname:document.getElementById('profile-lastname').value.trim(),school:document.getElementById('profile-school').value.trim(),emoji:document.getElementById('profile-emoji-display').textContent,selfLevel:selectedSelfLevel};
+  localStorage.setItem('educoach_profile',JSON.stringify(p));
+  if(p.firstname)state.studentName=p.firstname;
+  updateHomeScreen();closeProfile();
+}
+function loadProfileData(){try{return JSON.parse(localStorage.getItem('educoach_profile')||'{}')}catch(e){return{}}}
+
+// BADGE MODAL
+let currentBadgeData=null;
+function openBadgeModal(badge){
+  currentBadgeData=badge;
+  document.getElementById('bm-emoji').textContent=badge.emoji;
+  document.getElementById('bm-name').textContent=badge.name;
+  document.getElementById('bm-desc').textContent=badge.earned?'Badge débloqué ! 🎉':'Continue pour débloquer ce badge.';
+  document.getElementById('badge-modal').classList.add('show');
+  if(badge.earned)setTimeout(()=>drawBadgeCanvas(badge),100);
+}
+function closeBadgeModal(){document.getElementById('badge-modal').classList.remove('show')}
+function drawBadgeCanvas(badge){
+  const canvas=document.getElementById('badge-canvas');
+  const ctx=canvas.getContext('2d');
+  const grd=ctx.createLinearGradient(0,0,280,160);
+  grd.addColorStop(0,'#1A1335');grd.addColorStop(1,'#0F0A1E');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.roundRect(0,0,280,160,12);ctx.fill();
+  ctx.strokeStyle='#F5C842';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(2,2,276,156,11);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  for(let i=0;i<20;i++){ctx.beginPath();ctx.arc(Math.random()*280,Math.random()*160,Math.random()*1.5,0,Math.PI*2);ctx.fill()}
+  ctx.font='48px serif';ctx.textAlign='center';ctx.fillText(badge.emoji,80,100);
+  ctx.font='bold 16px Arial';ctx.fillStyle='#F5C842';ctx.textAlign='left';ctx.fillText(badge.name,120,70);
+  const p=loadProfileData();const name=(p.firstname||state.studentName||'Élève')+' '+(p.lastname||'');
+  ctx.font='13px Arial';ctx.fillStyle='#EDE9FF';ctx.fillText(name.trim(),120,95);
+  if(p.school){ctx.font='11px Arial';ctx.fillStyle='#8B7EC8';ctx.fillText(p.school,120,115)}
+  ctx.font='bold 10px Arial';ctx.fillStyle='rgba(245,200,66,0.6)';ctx.textAlign='right';ctx.fillText('EduCoach ⚔️',270,148);
+}
+async function shareBadgeNative(){
+  const canvas=document.getElementById('badge-canvas');
+  canvas.toBlob(async(blob)=>{
+    const file=new File([blob],'badge-educoach.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({title:`Badge "${currentBadgeData?.name}" sur EduCoach !`,files:[file],url:'https://educoach-poc.vercel.app'})}catch(e){copyBadgeLink()}
+    } else copyBadgeLink();
+  });
+}
+function copyBadgeLink(){
+  const p=loadProfileData();const name=p.firstname||state.studentName||'Un élève';
+  const text=`🏆 ${name} vient de débloquer "${currentBadgeData?.name}" sur EduCoach !\n⚔️ Je prépare mon brevet de maths avec Elio\n👉 https://educoach-poc.vercel.app`;
+  navigator.clipboard.writeText(text).then(()=>alert('Texte copié ! 📋')).catch(()=>prompt('Copie ce texte :',text));
+}
+
+// OBJECTIVES
+const THEME_BADGES=[
+  {theme:'calcul',emoji:'🔢',name:'Calcul',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--green)'},
+  {theme:'alg',emoji:'🔤',name:'Algèbre',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--blue)'},
+  {theme:'geo',emoji:'📐',name:'Géométrie',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--purple)'},
+  {theme:'fonc',emoji:'📈',name:'Fonctions',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--amber)'},
+  {theme:'stat',emoji:'📊',name:'Stats',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--teal)'},
+];
+function buildObjectives(){
+  const section=document.getElementById('objectives-section');
+  if(!section)return;
+  section.innerHTML=THEME_BADGES.map(t=>{
+    const score=state.scores[t.theme]||0;
+    const nextTarget=t.targets.find(tg=>score<tg)||t.targets[t.targets.length-1];
+    const pct=Math.min(100,Math.round((score/nextTarget)*100));
+    const lvl=score>=t.targets[2]?2:score>=t.targets[1]?1:score>=t.targets[0]?0:-1;
+    const currentBadge=lvl>=0?t.badges[lvl]+' du '+t.name:null;
+    const nextBadge=t.badges[Math.min(lvl+1,2)]+' du '+t.name;
+    return `<div class="objective-row${lvl===2?' objective-unlocked':''}">
+      <div class="objective-header">
+        <div class="objective-left">
+          <span class="objective-emoji">${t.emoji}</span>
+          <div><div class="objective-name">${t.name}</div><div class="objective-badge-name">${currentBadge?'✅ '+currentBadge:'Prochain : '+nextBadge}</div></div>
+        </div>
+        <div class="objective-pct">${score}%</div>
+      </div>
+      <div class="objective-bar"><div class="objective-bar-fill" style="width:${pct}%;background:${t.color}"></div></div>
+      <div class="objective-target">Objectif : ${nextTarget}%</div>
+    </div>`;
+  }).join('');
+}
+
+// VOICE TTS + STT
+let ttsEnabled=false;let sttEnabled=false;let recognition=null;
+function toggleTTS(){
+  ttsEnabled=!ttsEnabled;
+  const btn=document.getElementById('btn-tts');
+  btn.classList.toggle('active',ttsEnabled);btn.textContent=ttsEnabled?'🔊 ON':'🔊 Voix';
+  if(!ttsEnabled)window.speechSynthesis?.cancel();
+}
+function speakText(text){
+  if(!ttsEnabled||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const clean=text.replace(/<[^>]*>/g,'').replace(/[#*🔢🔤📐📈📊⚔️🏆🎯🥚⚡💫👑💎🔥🧙🛡️⚔️🥉🥈🥇]/g,'').trim();
+  if(!clean)return;
+  const utt=new SpeechSynthesisUtterance(clean);
+  utt.lang='fr-FR';utt.rate=0.95;utt.pitch=1.1;
+  const voices=window.speechSynthesis.getVoices();
+  const fr=voices.find(v=>v.lang.startsWith('fr')&&v.name.includes('Google'))||voices.find(v=>v.lang.startsWith('fr'));
+  if(fr)utt.voice=fr;
+  window.speechSynthesis.speak(utt);
+}
+function toggleMic(){sttEnabled?stopMic():startMic()}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Reconnaissance vocale non supportée. Utilise Chrome !');return}
+  recognition=new SR();recognition.lang='fr-FR';recognition.interimResults=false;recognition.maxAlternatives=1;
+  recognition.onresult=(e)=>{document.getElementById('answer-input').value=e.results[0][0].transcript;stopMic();submitAnswer()};
+  recognition.onerror=()=>stopMic();recognition.onend=()=>{if(sttEnabled)stopMic()};
+  recognition.start();sttEnabled=true;
+  const btn=document.getElementById('btn-mic');btn.classList.add('listening');btn.textContent='🎤 Écoute...';
+}
+function stopMic(){if(recognition){recognition.stop();recognition=null}sttEnabled=false;const btn=document.getElementById('btn-mic');btn.classList.remove('listening');btn.textContent='🎤 Micro'}
+
+// PATCH showSpeech for TTS
+const _origSS=showSpeech;
+showSpeech=function(text,ex=null,cb=null){
+  _origSS(text,ex,cb);
+  if(text)speakText(text);
+  if(ex?.question)speakText(ex.question);
+};
+
+// PATCH updateHomeScreen for objectives + profile emoji
+const _origUH=updateHomeScreen;
+updateHomeScreen=function(){
+  _origUH();
+  const p=loadProfileData();
+  const el=document.getElementById('home-user-emoji');
+  if(el)el.textContent=p.emoji||'🧑';
+  buildObjectives();
+};
+
+// PATCH buildBadges clickable
+const _origBB=buildBadges;
+buildBadges=function(){
+  const grid=document.getElementById('badges-grid');
+  grid.innerHTML=BADGES.map(b=>{
+    const earned=b.condition(state);
+    return `<div class="badge-card${earned?' earned':' locked'}" style="cursor:pointer" onclick='openBadgeModal({emoji:"${b.emoji}",name:"${b.name}",earned:${earned}})'>
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.name}</div>
+      ${earned?'<div style="font-size:9px;color:var(--gold);margin-top:2px">Partager</div>':''}
+    </div>`;
+  }).join('');
+};
+
+// Check theme badge unlock after score update
+function checkThemeBadgeUnlock(){
+  THEME_BADGES.forEach(t=>{
+    const score=state.scores[t.theme]||0;
+    const key='badge_unlocked_'+t.theme;
+    const prev=parseInt(localStorage.getItem(key)||'0');
+    const newLvl=score>=t.targets[2]?3:score>=t.targets[1]?2:score>=t.targets[0]?1:0;
+    if(newLvl>prev){
+      localStorage.setItem(key,newLvl);
+      const bname=t.badges[newLvl-1]+' du '+t.name;
+      setTimeout(()=>{openBadgeModal({emoji:t.emoji,name:bname,earned:true});speakText('Félicitations ! Tu as débloqué '+bname);},800);
+    }
+  });
+}
+const _origUTS=updateTopicScore;
+updateTopicScore=function(topic,correct){_origUTS(topic,correct);checkThemeBadgeUnlock()};
+
+// Profile save on setup
+const _origFS=finishSetup;
+finishSetup=function(){
+  const p=loadProfileData();
+  if(!p.firstname&&state.studentName){p.firstname=state.studentName;localStorage.setItem('educoach_profile',JSON.stringify(p))}
+  _origFS();
+};
+
 </script>
+
+<!-- PROFILE OVERLAY -->
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-header">
+    <div class="profile-title">⚔️ Mon Profil</div>
+    <button class="btn-close-profile" onclick="closeProfile()">✕ Fermer</button>
+  </div>
+
+  <div class="profile-avatar-section">
+    <span class="profile-emoji-display" id="profile-emoji-display" onclick="toggleEmojiPicker()">🧑</span>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Clique pour changer ton emoji</div>
+    <div class="profile-emoji-grid" id="emoji-picker">
+      🧑 👦 👧 🧒 👨 👩 🧔 👱 🦸 🧙 🧝 🧛 🦊 🐺 🦁 🐯 🦄 🐉 🔥 ⚔️ 🛡️ 🏹 💎 👑
+    </div>
+  </div>
+
+  <div class="profile-field">
+    <label>Prénom</label>
+    <input type="text" class="profile-input" id="profile-firstname" placeholder="Ex: Emma"/>
+  </div>
+  <div class="profile-field">
+    <label>Nom</label>
+    <input type="text" class="profile-input" id="profile-lastname" placeholder="Ex: Dupont"/>
+  </div>
+  <div class="profile-field">
+    <label>Mon collège</label>
+    <input type="text" class="profile-input" id="profile-school" placeholder="Ex: Collège Victor Hugo"/>
+  </div>
+
+  <div class="profile-field">
+    <label>Comment tu évalues ton niveau en maths ?</label>
+    <div class="level-self-grid">
+      <div class="self-level-btn" onclick="selectSelfLevel('nul')" id="sl-nul">
+        <div class="self-level-emoji">😰</div>
+        <div class="self-level-name">Difficile</div>
+        <div class="self-level-desc">J'ai du mal</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('moyen')" id="sl-moyen">
+        <div class="self-level-emoji">😐</div>
+        <div class="self-level-name">Moyen</div>
+        <div class="self-level-desc">Ça dépend</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('bien')" id="sl-bien">
+        <div class="self-level-emoji">😊</div>
+        <div class="self-level-name">Bien</div>
+        <div class="self-level-desc">Je m'en sors</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('expert')" id="sl-expert">
+        <div class="self-level-emoji">🔥</div>
+        <div class="self-level-name">Expert</div>
+        <div class="self-level-desc">Je cartonne</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-save-profile" onclick="saveProfile()">Sauvegarder mon profil ✓</button>
+</div>
+
+<!-- BADGE MODAL -->
+<div class="badge-modal" id="badge-modal" onclick="closeBadgeModal()">
+  <div class="badge-modal-card" onclick="event.stopPropagation()">
+    <span class="badge-modal-emoji" id="bm-emoji">🏆</span>
+    <div class="badge-modal-name" id="bm-name">Badge</div>
+    <div class="badge-modal-desc" id="bm-desc">Description du badge</div>
+    <canvas class="badge-modal-canvas" id="badge-canvas" width="280" height="160"></canvas>
+    <div class="badge-share-btns">
+      <button class="btn-share btn-share-native" onclick="shareBadgeNative()">📤 Partager</button>
+      <button class="btn-share btn-share-copy" onclick="copyBadgeLink()">🔗 Copier lien</button>
+    </div>
+    <button class="btn-close-badge" onclick="closeBadgeModal()">Fermer</button>
+  </div>
+</div>
+
 </body>
 </html>
