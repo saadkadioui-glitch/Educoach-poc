@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>EduCoach — Elio</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+:root {
+  --bg:#0F0A1E;--surface:#1A1335;--surface2:#241B45;--border:#3D2F6B;
+  --gold:#F5C842;--gold-dark:#D4A800;--purple:#7C6FCD;--teal:#5EEAD4;
+  --red:#FF5C6A;--amber:#FFB547;--text:#EDE9FF;--muted:#8B7EC8;
+  --green:#34D399;--blue:#60A5FA;
+  --medieval-sky1:#0A0520;--medieval-sky2:#1A0A3A;--medieval-ground:#1A0F0A;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:var(--bg);color:var(--text)}
+
+/* ===== AUTH ===== */
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto;padding:40px 20px;display:flex;flex-direction:column;align-items:center}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px;max-width:400px;width:100%;text-align:center;margin:0 auto}
+.auth-logo{font-size:48px;margin-bottom:12px}
+.auth-title{font-size:22px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,var(--gold),#FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-sub{color:var(--muted);font-size:13px;margin-bottom:24px;line-height:1.6}
+.auth-tabs{display:flex;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.auth-tab.active{background:var(--gold);color:#0F0A1E}
+.auth-field{text-align:left;margin-bottom:12px}
+.auth-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.auth-field input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s}
+.auth-field input:focus{border-color:var(--gold)}
+.btn-auth{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:13px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;margin-top:4px;transition:all 0.2s}
+.btn-auth:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(245,200,66,0.3)}
+.btn-auth:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--muted);font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.2s}
+.btn-google:hover{border-color:var(--gold)}
+.auth-msg{font-size:12px;margin-top:10px;padding:10px;border-radius:8px;display:none}
+.auth-msg.error{background:rgba(255,92,106,0.1);border:1px solid rgba(255,92,106,0.3);color:var(--red);display:block}
+.auth-msg.success{background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);color:var(--gold);display:block}
+
+/* ===== PROFILE SETUP ===== */
+.setup-screen{position:fixed;inset:0;background:var(--bg);z-index:250;display:none;overflow-y:auto;padding:30px 20px}
+.setup-screen.show{display:block}
+.setup-container{max-width:480px;margin:0 auto}
+.setup-header{text-align:center;margin-bottom:28px}
+.setup-title{font-size:22px;font-weight:800;margin-bottom:8px;color:var(--gold)}
+.setup-sub{color:var(--muted);font-size:14px;line-height:1.6}
+.setup-step{display:none}
+.setup-step.active{display:block}
+.step-label{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px}
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.level-btn{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Sora',sans-serif}
+.level-btn:hover{border-color:var(--gold)}
+.level-btn.selected{border-color:var(--gold);background:rgba(245,200,66,0.1)}
+.level-btn .level-emoji{font-size:28px;margin-bottom:6px}
+.level-btn .level-name{font-size:13px;font-weight:700;color:var(--text)}
+.level-btn .level-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.chapters-grid{display:grid;grid-template-columns:1fr;gap:0;margin-bottom:24px}
+.chapter-group-title{font-size:12px;font-weight:700;padding:10px 14px 6px;color:var(--gold);text-transform:uppercase;letter-spacing:0.6px;background:var(--surface2);border-radius:8px 8px 0 0;margin-top:10px}
+.chapter-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-top:none;cursor:pointer;transition:background 0.15s}
+.chapter-item:last-child{border-radius:0 0 8px 8px}
+.chapter-item.checked{background:rgba(245,200,66,0.06)}
+.chapter-checkbox{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;background:var(--surface2)}
+.chapter-item.checked .chapter-checkbox{background:var(--gold);border-color:var(--gold)}
+.chapter-name{font-size:13px;flex:1;line-height:1.4}
+.chapter-level{font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:10px;flex-shrink:0}
+.btn-setup{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s;margin-top:8px}
+.btn-setup:hover{transform:translateY(-1px)}
+.btn-setup:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+
+/* ===== MAIN APP ===== */
+.app{position:fixed;inset:0;display:none;flex-direction:column}
+.app.visible{display:flex}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;display:none;padding-bottom:70px}
+.screen.active{display:block}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{height:65px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 10px;flex-shrink:0;position:relative;z-index:10}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 20px;border-radius:12px;transition:all 0.2s;font-family:'Sora',sans-serif}
+.nav-btn .nav-icon{font-size:22px;transition:transform 0.2s}
+.nav-btn .nav-label{font-size:10px;font-weight:600;color:var(--muted);transition:color 0.2s}
+.nav-btn.active .nav-label{color:var(--gold)}
+.nav-btn.active .nav-icon{transform:scale(1.15)}
+.nav-btn.active{background:rgba(245,200,66,0.08)}
+
+/* ===== SCREEN 1: HOME ===== */
+.home-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.home-greeting{font-size:20px;font-weight:800}
+.home-greeting span{color:var(--gold)}
+.streak-badge{display:flex;align-items:center;gap:6px;background:rgba(255,181,71,0.15);border:1px solid rgba(255,181,71,0.3);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--amber)}
+
+.xp-card{margin:16px;background:linear-gradient(135deg,#1A1335,#241B45);border:1px solid var(--border);border-radius:20px;padding:20px}
+.xp-level-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.xp-level-info{display:flex;align-items:center;gap:10px}
+.xp-emoji{font-size:32px}
+.xp-title{font-size:18px;font-weight:800;color:var(--gold)}
+.xp-subtitle{font-size:12px;color:var(--muted)}
+.xp-points{font-size:13px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.xp-bar-track{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.xp-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width 0.8s ease}
+.xp-bar-labels{display:flex;justify-content:space-between;margin-top:4px}
+.xp-bar-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 16px 16px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stat-val{font-size:20px;font-weight:800;margin-bottom:2px}
+.stat-lbl{font-size:10px;color:var(--muted)}
+
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin:0 16px 10px}
+
+.today-card{margin:0 16px 16px;background:linear-gradient(135deg,rgba(245,200,66,0.12),rgba(212,168,0,0.06));border:1px solid rgba(245,200,66,0.3);border-radius:16px;padding:18px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s}
+.today-card:hover{transform:translateY(-2px)}
+.today-card-left .today-label{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px}
+.today-card-left .today-title{font-size:16px;font-weight:800}
+.today-card-left .today-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.btn-play{background:var(--gold);color:#0F0A1E;border:none;border-radius:50%;width:44px;height:44px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.btn-play:hover{transform:scale(1.1)}
+
+.theme-progress{margin:0 16px 16px}
+.theme-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.theme-emoji{font-size:16px;width:24px;text-align:center}
+.theme-info{flex:1}
+.theme-name{font-size:12px;font-weight:600;margin-bottom:3px}
+.theme-bar{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.theme-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+.theme-pct{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:36px;text-align:right}
+
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 16px 20px}
+.badge-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;text-align:center;transition:all 0.2s}
+.badge-card.earned{border-color:var(--gold);background:rgba(245,200,66,0.08)}
+.badge-card.locked{opacity:0.4}
+.badge-emoji{font-size:26px;margin-bottom:4px}
+.badge-name{font-size:9px;color:var(--muted);font-weight:600;line-height:1.3}
+.badge-card.earned .badge-name{color:var(--gold)}
+
+/* ===== SCREEN 2: ELIO MEDIEVAL ===== */
+.elio-screen{position:relative;height:100%;display:flex;flex-direction:column;overflow:hidden}
+
+/* Medieval sky background */
+.medieval-bg{position:absolute;inset:0;overflow:hidden;z-index:0}
+.sky{position:absolute;inset:0;background:linear-gradient(180deg,#050210 0%,#0A0520 40%,#1A0A3A 70%,#2A1510 100%)}
+
+/* Stars */
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle var(--d,3s) infinite var(--delay,0s)}
+@keyframes twinkle{0%,100%{opacity:var(--o,0.8)}50%{opacity:0.2}}
+
+/* Castle silhouette */
+.castle{position:absolute;bottom:0;left:0;right:0;height:200px}
+
+/* Torch flames */
+.torch{position:absolute;bottom:120px}
+.torch-left{left:15%}
+.torch-right{right:15%}
+.flame{width:16px;height:24px;background:var(--amber);border-radius:50% 50% 20% 20%;animation:flicker 0.5s infinite alternate;transform-origin:bottom center}
+@keyframes flicker{0%{transform:scaleX(0.9) scaleY(1.1) rotate(-3deg);opacity:0.9}100%{transform:scaleX(1.1) scaleY(0.9) rotate(3deg);opacity:1}}
+
+/* Ground */
+.ground{position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(180deg,#1A0F0A,#0A0605)}
+
+/* ELIO CHARACTER */
+.elio-character{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);z-index:10;animation:elio-breathe 3s ease-in-out infinite;cursor:pointer;transition:transform 0.1s}
+.elio-character.bounce{animation:elio-bounce 0.5s ease-out}
+.elio-character.shake{animation:elio-shake 0.4s ease-out}
+@keyframes elio-breathe{0%,100%{transform:translateX(-50%) translateY(0) scale(1)}50%{transform:translateX(-50%) translateY(-6px) scale(1.01)}}
+@keyframes elio-bounce{0%{transform:translateX(-50%) translateY(0)}30%{transform:translateX(-50%) translateY(-30px)}60%{transform:translateX(-50%) translateY(-10px)}100%{transform:translateX(-50%) translateY(0)}}
+@keyframes elio-shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 8px))}75%{transform:translateX(calc(-50% + 8px))}}
+
+/* SPEECH BUBBLE */
+.speech-area{position:absolute;top:0;left:0;right:0;bottom:80px;z-index:20;padding:16px;display:flex;flex-direction:column;align-items:center;overflow-y:auto}
+.speech-bubble{background:rgba(255,255,255,0.96);border-radius:20px;padding:18px 22px;max-width:340px;width:100%;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4);margin-bottom:12px}
+.speech-bubble::after{content:'';position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-top-color:rgba(255,255,255,0.96)}
+.speech-text{font-size:15px;color:#1E1035;font-weight:500;line-height:1.55;text-align:center}
+.speech-typing{display:flex;gap:5px;justify-content:center;padding:4px 0}
+.speech-typing span{width:8px;height:8px;border-radius:50%;background:#7C6FCD;animation:bounce 1.2s infinite}
+.speech-typing span:nth-child(2){animation-delay:0.2s}
+.speech-typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* EXERCISE CARD */
+.exercise-card{background:rgba(255,255,255,0.95);border-radius:16px;padding:16px 20px;max-width:340px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.exercise-topic-badge{display:inline-block;background:rgba(124,111,205,0.15);color:#5B4FBF;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.exercise-question{font-size:15px;color:#1E1035;font-weight:600;line-height:1.5;font-family:'JetBrains Mono',monospace}
+.exercise-stars{display:flex;gap:3px;margin-top:8px}
+.exercise-stars span{font-size:14px}
+
+/* ANSWER AREA */
+.answer-area{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:12px 16px;background:linear-gradient(0deg,rgba(10,5,32,0.98) 0%,transparent 100%)}
+.answer-input-row{display:flex;gap:8px;align-items:center}
+.answer-input{flex:1;background:rgba(255,255,255,0.1);border:2px solid rgba(245,200,66,0.4);border-radius:14px;padding:12px 16px;color:white;font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:all 0.2s;backdrop-filter:blur(10px)}
+.answer-input:focus{border-color:var(--gold);background:rgba(255,255,255,0.15)}
+.answer-input::placeholder{color:rgba(255,255,255,0.4)}
+.btn-send{background:var(--gold);color:#0F0A1E;border:none;border-radius:12px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap;transition:all 0.2s}
+.btn-send:hover{background:var(--gold-dark)}
+.btn-send:disabled{opacity:0.4;cursor:not-allowed}
+
+/* FEEDBACK OVERLAY */
+.feedback-overlay{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;display:none}
+.feedback-overlay.show{display:flex}
+.feedback-correct-bg{background:rgba(52,211,153,0.15);backdrop-filter:blur(4px)}
+.feedback-wrong-bg{background:rgba(255,92,106,0.15);backdrop-filter:blur(4px)}
+.feedback-card{background:white;border-radius:20px;padding:24px;max-width:300px;width:90%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.4)}
+.feedback-emoji{font-size:48px;margin-bottom:12px}
+.feedback-title{font-size:18px;font-weight:800;margin-bottom:8px;color:#1E1035}
+.feedback-text{font-size:13px;color:#475569;line-height:1.5;margin-bottom:16px}
+.btn-next{background:linear-gradient(135deg,#7C6FCD,#5B4FBF);color:white;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-next:hover{transform:translateY(-1px)}
+
+/* PROGRESS BAR TOP */
+.progress-top{position:absolute;top:0;left:0;right:0;z-index:25;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.progress-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--amber));transition:width 0.4s ease}
+.progress-count{font-size:12px;color:rgba(255,255,255,0.7);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.btn-exit{background:rgba(255,255,255,0.1);border:none;border-radius:8px;color:rgba(255,255,255,0.6);font-size:12px;cursor:pointer;padding:6px 10px;font-family:'Sora',sans-serif;transition:all 0.2s}
+.btn-exit:hover{background:rgba(255,255,255,0.2)}
+
+/* SESSION END */
+.session-end-overlay{position:absolute;inset:0;z-index:40;background:rgba(10,5,32,0.95);display:none;align-items:center;justify-content:center;padding:20px}
+.session-end-overlay.show{display:flex}
+.session-end-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:360px;width:100%;text-align:center}
+.session-end-emoji{font-size:56px;margin-bottom:12px}
+.session-end-title{font-size:22px;font-weight:800;color:var(--gold);margin-bottom:6px}
+.session-end-sub{font-size:14px;color:var(--muted);margin-bottom:20px}
+.session-end-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.ses-stat{background:var(--surface2);border-radius:12px;padding:12px}
+.ses-stat-val{font-size:22px;font-weight:800;color:var(--gold)}
+.ses-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px}
+.btn-home{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#0F0A1E;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif}
+
+/* ===== SCREEN 3: COURS ===== */
+.courses-header{padding:20px 16px 12px}
+.courses-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.courses-sub{font-size:13px;color:var(--muted)}
+.course-group{margin:0 16px 16px}
+.course-group-title{font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.course-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s}
+.course-card:hover{border-color:var(--gold);transform:translateX(4px)}
+.course-card-left{display:flex;align-items:center;gap:12px}
+.course-icon{font-size:20px;width:36px;height:36px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.course-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.course-level{font-size:11px;color:var(--muted)}
+.course-arrow{color:var(--muted);font-size:16px}
+.course-card.locked{opacity:0.5;cursor:not-allowed}
+.course-card.locked:hover{transform:none;border-color:var(--border)}
+
+/* FICHE DETAIL */
+.fiche-overlay{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;display:none;padding-bottom:30px}
+.fiche-overlay.show{display:block}
+.fiche-header{padding:16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5}
+.btn-back-fiche{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:8px 14px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;transition:all 0.2s}
+.fiche-header-title{font-size:16px;font-weight:700}
+.fiche-content{padding:20px 16px}
+.fiche-loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.fiche-loading-elio{font-size:48px;animation:elio-breathe 2s infinite;display:block;margin-bottom:12px}
+.fiche-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+.fiche-section-title{font-size:13px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.fiche-text{font-size:14px;line-height:1.7;color:var(--text)}
+.fiche-tip{display:flex;gap:10px;padding:10px 14px;background:rgba(245,200,66,0.06);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;margin-bottom:8px}
+.fiche-tip-icon{font-size:16px;flex-shrink:0}
+.fiche-tip-text{font-size:13px;line-height:1.5;color:var(--text)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.animate-in{animation:fadeIn 0.3s ease forwards}
+.speech-continue{display:flex;justify-content:center;margin-top:6px;width:100%;max-width:340px}
+.btn-continue{width:100%}
+.btn-continue{background:linear-gradient(135deg,#7C6FCD,#5B4FBF);color:white;border:none;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:6px;transition:all 0.2s;animation:pulse-btn 1.5s infinite}
+.btn-continue:hover{transform:scale(1.05)}
+@keyframes pulse-btn{0%,100%{box-shadow:0 0 0 0 rgba(124,111,205,0.4)}50%{box-shadow:0 0 0 6px rgba(124,111,205,0)}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">⚔️</div>
+    <h1 class="auth-title">EduCoach</h1>
+    <p class="auth-sub">Rejoins Elio dans son royaume pour préparer le brevet de maths !</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">S'inscrire</button>
+    </div>
+    <div id="form-login">
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="ton@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+      <button class="btn-auth" id="btn-login" onclick="login()">Entrer dans le royaume →</button>
+    </div>
+    <div id="form-signup" style="display:none">
+      <div class="auth-field"><label>Ton prénom</label><input type="text" id="signup-name" placeholder="Ex: Emma"/></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="ton@email.com"/></div>
+      <div class="auth-field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Minimum 6 caractères"/></div>
+      <button class="btn-auth" id="btn-signup" onclick="signup()">Créer mon compte →</button>
+    </div>
+    <div class="divider">ou</div>
+    <button class="btn-google" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continuer avec Google
+    </button>
+    <div class="auth-msg" id="auth-msg"></div>
+  </div>
+</div>
+
+<!-- PROFILE SETUP -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-container">
+    <div class="setup-header">
+      <div style="font-size:48px;margin-bottom:12px">⚔️</div>
+      <div class="setup-title">Bienvenue dans le Royaume !</div>
+      <div class="setup-sub">Avant de commencer, Elio a besoin de te connaître pour créer ton entraînement parfait.</div>
+    </div>
+
+    <!-- Step 1: Niveau -->
+    <div class="setup-step active" id="setup-step-1">
+      <div class="step-label">Étape 1/2 — Ton niveau scolaire</div>
+      <div class="level-grid">
+        <div class="level-btn" onclick="selectLevel('5e')" id="lvl-5e">
+          <div class="level-emoji">🌱</div>
+          <div class="level-name">5e</div>
+          <div class="level-desc">Je commence</div>
+        </div>
+        <div class="level-btn" onclick="selectLevel('4e')" id="lvl-4e">
+          <div class="level-emoji">⚔️</div>
+          <div class="level-name">4e</div>
+          <div class="level-desc">En cours</div>
+        </div>
+        <div class="level-btn" onclick="selectLevel('3e')" id="lvl-3e">
+          <div class="level-emoji">🏆</div>
+          <div class="level-name">3e</div>
+          <div class="level-desc">Brevet cette année</div>
+        </div>
+      </div>
+      <button class="btn-setup" id="btn-next-level" onclick="goToChapters()" disabled>Continuer →</button>
+    </div>
+
+    <!-- Step 2: Chapitres -->
+    <div class="setup-step" id="setup-step-2">
+      <div class="step-label">Étape 2/2 — Chapitres déjà vus en classe</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Décoche les chapitres que tu n'as pas encore étudiés.</p>
+      <div id="chapters-list"></div>
+      <button class="btn-setup" id="btn-start-diag" onclick="finishSetup()">C'est parti avec Elio ! ⚔️</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="app">
+
+  <!-- SCREEN 1: HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="home-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="home-user-emoji" style="font-size:28px">🧑</span>
+        <div class="home-greeting">Salut <span id="home-name">—</span> !</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="streak-badge">🔥 <span id="home-streak">1</span> j</div>
+        <button onclick="openProfile()" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif">⚙️ Profil</button>
+      </div>
+    </div>
+
+    <!-- XP Card -->
+    <div class="xp-card">
+      <div class="xp-level-row">
+        <div class="xp-level-info">
+          <div class="xp-emoji" id="xp-emoji">🥚</div>
+          <div>
+            <div class="xp-title" id="xp-title">Rookie</div>
+            <div class="xp-subtitle">Niveau <span id="xp-level-num">1</span></div>
+          </div>
+        </div>
+        <div class="xp-points"><span id="xp-current">0</span> / <span id="xp-next">100</span> XP</div>
+      </div>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+      </div>
+      <div class="xp-bar-labels">
+        <span class="xp-bar-label">0</span>
+        <span class="xp-bar-label" id="xp-bar-next">100 XP</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-sessions" style="color:var(--gold)">0</div>
+        <div class="stat-lbl">Sessions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-exos" style="color:var(--teal)">0</div>
+        <div class="stat-lbl">Exercices</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-score-home" style="color:var(--purple)">—</div>
+        <div class="stat-lbl">Score moy.</div>
+      </div>
+    </div>
+
+    <!-- Today's session -->
+    <div class="section-title">SESSION DU JOUR</div>
+    <div class="today-card" onclick="goToElio()">
+      <div class="today-card-left">
+        <div class="today-label">⚔️ Elio t'attend</div>
+        <div class="today-title" id="today-theme">Commencer le diagnostic</div>
+        <div class="today-sub" id="today-sub">20 questions pour évaluer ton niveau</div>
+      </div>
+      <button class="btn-play">▶</button>
+    </div>
+
+    <!-- Theme progress -->
+    <div class="section-title">PROGRESSION PAR THÈME</div>
+    <div class="theme-progress">
+      <div class="theme-row"><div class="theme-emoji">🔢</div><div class="theme-info"><div class="theme-name">Calcul</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-calcul" style="width:0%;background:var(--green)"></div></div></div><div class="theme-pct" id="tpp-calcul">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">🔤</div><div class="theme-info"><div class="theme-name">Algèbre</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-alg" style="width:0%;background:var(--blue)"></div></div></div><div class="theme-pct" id="tpp-alg">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📐</div><div class="theme-info"><div class="theme-name">Géométrie</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-geo" style="width:0%;background:var(--purple)"></div></div></div><div class="theme-pct" id="tpp-geo">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📈</div><div class="theme-info"><div class="theme-name">Fonctions</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-fonc" style="width:0%;background:var(--amber)"></div></div></div><div class="theme-pct" id="tpp-fonc">0%</div></div>
+      <div class="theme-row"><div class="theme-emoji">📊</div><div class="theme-info"><div class="theme-name">Stats & Proba</div><div class="theme-bar"><div class="theme-bar-fill" id="tp-stat" style="width:0%;background:var(--teal)"></div></div></div><div class="theme-pct" id="tpp-stat">0%</div></div>
+    </div>
+
+    <!-- Objectives -->
+    <div class="section-title">OBJECTIFS PAR THÈME</div>
+    <div class="objectives-section" id="objectives-section"></div>
+
+    <!-- Badges -->
+    <div class="section-title">MES BADGES</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+
+  <!-- SCREEN 2: ELIO -->
+  <div class="screen" id="screen-elio">
+    <div class="elio-screen">
+      <!-- Medieval background -->
+      <div class="medieval-bg">
+        <div class="sky" id="medieval-sky"></div>
+        <!-- Ground -->
+        <div class="ground"></div>
+        <!-- Castle SVG -->
+        <svg class="castle" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+          <rect x="150" y="60" width="100" height="140" fill="#0D0A1A"/>
+          <rect x="130" y="40" width="30" height="80" fill="#0D0A1A"/>
+          <rect x="240" y="40" width="30" height="80" fill="#0D0A1A"/>
+          <rect x="125" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="141" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="157" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="235" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="251" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="267" y="32" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="145" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="161" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="247" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="263" y="52" width="8" height="16" fill="#0D0A1A"/>
+          <rect x="180" y="110" width="40" height="90" fill="#150F25" rx="3"/>
+          <rect x="175" y="70" width="50" height="10" fill="#F5C842" opacity="0.3"/>
+          <circle cx="200" cy="75" r="4" fill="#F5C842" opacity="0.6"/>
+          <rect x="0" y="140" width="130" height="60" fill="#080510"/>
+          <rect x="270" y="140" width="130" height="60" fill="#080510"/>
+          <rect x="0" y="130" width="60" height="70" fill="#080510"/>
+          <rect x="340" y="130" width="60" height="70" fill="#080510"/>
+        </svg>
+        <!-- Torches -->
+        <div class="torch torch-left"><div class="flame"></div></div>
+        <div class="torch torch-right"><div class="flame"></div></div>
+      </div>
+
+      <!-- Voice controls -->
+      <div class="voice-controls">
+        <button class="btn-voice" id="btn-tts" onclick="toggleTTS()" title="Voix Elio">🔊 Voix</button>
+        <button class="btn-mic" id="btn-mic" onclick="toggleMic()" title="Répondre à voix haute">🎤 Micro</button>
+      </div>
+
+      <!-- Progress bar top -->
+      <div class="progress-top" id="progress-top" style="display:none">
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-count" id="progress-count">0/20</div>
+        <button class="btn-exit" onclick="exitSession()">✕</button>
+      </div>
+
+      <!-- Speech bubble -->
+      <div class="speech-area" id="speech-area">
+        <div class="speech-bubble" id="speech-bubble">
+          <div class="speech-typing" id="speech-typing"><span></span><span></span><span></span></div>
+          <div class="speech-text" id="speech-text" style="display:none"></div>
+        </div>
+        <div class="speech-continue" id="speech-continue" style="display:none">
+          <button class="btn-continue" onclick="onContinue()">Continuer →</button>
+        </div>
+        <div class="exercise-card" id="exercise-card" style="display:none">
+          <div class="exercise-topic-badge" id="ex-topic"></div>
+          <div class="exercise-question" id="ex-question"></div>
+          <div class="exercise-stars" id="ex-stars"></div>
+        </div>
+      </div>
+
+      <!-- Elio character -->
+      <div class="elio-character" id="elio-char" onclick="elioTap()">
+        <svg width="120" height="200" viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- Boots -->
+          <ellipse cx="42" cy="188" rx="16" ry="8" fill="#2A1F0A"/>
+          <ellipse cx="78" cy="188" rx="16" ry="8" fill="#2A1F0A"/>
+          <rect x="28" y="165" width="28" height="26" rx="6" fill="#3D2E0F"/>
+          <rect x="64" y="165" width="28" height="26" rx="6" fill="#3D2E0F"/>
+          <!-- Pants -->
+          <rect x="32" y="130" width="24" height="40" rx="4" fill="#1A3A5C"/>
+          <rect x="64" y="130" width="24" height="40" rx="4" fill="#1A3A5C"/>
+          <!-- Belt -->
+          <rect x="28" y="125" width="64" height="10" rx="3" fill="#5C3A00"/>
+          <circle cx="60" cy="130" r="5" fill="#F5C842"/>
+          <!-- Tunic/Body -->
+          <path d="M25 80 Q20 90 22 130 L98 130 Q100 90 95 80 Q80 70 60 68 Q40 70 25 80Z" fill="#1DB954"/>
+          <path d="M40 80 L42 130 L78 130 L80 80 Q60 72 40 80Z" fill="#17A045" opacity="0.5"/>
+          <!-- Cape -->
+          <path d="M25 82 Q15 100 18 140 Q20 145 25 143 Q30 130 32 120 Q28 110 25 82Z" fill="#8B0000" opacity="0.9"/>
+          <path d="M95 82 Q105 100 102 140 Q100 145 95 143 Q90 130 88 120 Q92 110 95 82Z" fill="#8B0000" opacity="0.9"/>
+          <!-- Arms -->
+          <rect x="8" y="80" width="20" height="50" rx="8" fill="#F5C5A3"/>
+          <rect x="92" y="80" width="20" height="50" rx="8" fill="#F5C5A3"/>
+          <!-- Gloves -->
+          <ellipse cx="18" cy="132" rx="10" ry="8" fill="#3D2E0F"/>
+          <ellipse cx="102" cy="132" rx="10" ry="8" fill="#3D2E0F"/>
+          <!-- Sword -->
+          <rect x="106" y="90" width="4" height="50" rx="2" fill="#C0C0C0"/>
+          <rect x="100" y="88" width="16" height="6" rx="2" fill="#F5C842"/>
+          <rect x="108" y="80" width="2" height="12" rx="1" fill="#F5C842"/>
+          <!-- Neck -->
+          <rect x="52" y="60" width="16" height="18" rx="5" fill="#F5C5A3"/>
+          <!-- Head -->
+          <ellipse cx="60" cy="44" rx="28" ry="30" fill="#F5C5A3"/>
+          <!-- Hair -->
+          <path d="M33 36 Q35 10 60 8 Q85 10 87 36 Q82 18 60 16 Q38 18 33 36Z" fill="#1A1A1A"/>
+          <path d="M48 12 Q52 2 58 6 Q54 14 50 18Z" fill="#1A1A1A"/>
+          <path d="M60 10 Q63 0 68 4 Q65 12 61 16Z" fill="#1A1A1A"/>
+          <path d="M72 13 Q78 4 82 9 Q77 16 73 19Z" fill="#1A1A1A"/>
+          <!-- Eyebrows -->
+          <path d="M42 30 Q48 26 54 29" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M66 29 Q72 26 78 30" stroke="#1A1A1A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Eyes -->
+          <ellipse cx="49" cy="38" rx="7" ry="7.5" fill="white"/>
+          <ellipse cx="71" cy="38" rx="7" ry="7.5" fill="white"/>
+          <path d="M42 34 Q49 30 56 34" fill="#F5C5A3" opacity="0.9"/>
+          <path d="M64 34 Q71 30 78 34" fill="#F5C5A3" opacity="0.9"/>
+          <circle cx="50" cy="39" r="4.5" fill="#111"/>
+          <circle cx="72" cy="39" r="4.5" fill="#111"/>
+          <circle cx="48" cy="37" r="1.8" fill="#F5C842"/>
+          <circle cx="70" cy="37" r="1.8" fill="#F5C842"/>
+          <circle cx="46.5" cy="36" r="1.2" fill="white"/>
+          <circle cx="68.5" cy="36" r="1.2" fill="white"/>
+          <!-- Nose -->
+          <path d="M58 44 Q56 50 55 52 Q60 54 65 52 Q64 50 62 44Z" fill="#E8A882" opacity="0.6"/>
+          <!-- Smile -->
+          <path d="M50 58 Q60 66 70 58" stroke="#C0706A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- Cheeks -->
+          <ellipse cx="37" cy="50" rx="9" ry="6" fill="#E8907A" opacity="0.35"/>
+          <ellipse cx="83" cy="50" rx="9" ry="6" fill="#E8907A" opacity="0.35"/>
+          <!-- Helmet/Crown -->
+          <path d="M32 26 Q34 12 60 10 Q86 12 88 26 Q82 16 60 14 Q38 16 32 26Z" fill="#F5C842" opacity="0.8"/>
+          <path d="M32 26 L36 18 L40 26" fill="#F5C842"/>
+          <path d="M54 22 L58 10 L62 22" fill="#F5C842"/>
+          <path d="M80 26 L84 18 L88 26" fill="#F5C842"/>
+          <circle cx="38" cy="20" r="4" fill="#FF5C6A"/>
+          <circle cx="60" cy="12" r="4" fill="#FF5C6A"/>
+          <circle cx="82" cy="20" r="4" fill="#FF5C6A"/>
+        </svg>
+      </div>
+
+      <!-- Answer area -->
+      <div class="answer-area" id="answer-area">
+        <div class="answer-input-row">
+          <input type="text" class="answer-input" id="answer-input" placeholder="Ta réponse..." onkeydown="handleAnswerKey(event)" disabled/>
+          <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
+        </div>
+      </div>
+
+      <!-- Feedback overlay -->
+      <div class="feedback-overlay" id="feedback-overlay">
+        <div class="feedback-card" id="feedback-card">
+          <div class="feedback-emoji" id="feedback-emoji">✅</div>
+          <div class="feedback-title" id="feedback-title">Bonne réponse !</div>
+          <div class="feedback-text" id="feedback-text"></div>
+          <button class="btn-next" onclick="nextQuestion()">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- Session end -->
+      <div class="session-end-overlay" id="session-end">
+        <div class="session-end-card">
+          <div class="session-end-emoji" id="end-emoji">🏆</div>
+          <div class="session-end-title" id="end-title">Session terminée !</div>
+          <div class="session-end-sub" id="end-sub">T'as bien bossé !</div>
+          <div class="session-end-stats">
+            <div class="ses-stat"><div class="ses-stat-val" id="end-exos">0</div><div class="ses-stat-lbl">Exercices</div></div>
+            <div class="ses-stat"><div class="ses-stat-val" id="end-score">0%</div><div class="ses-stat-lbl">Score</div></div>
+            <div class="ses-stat"><div class="ses-stat-val" id="end-xp">+0</div><div class="ses-stat-lbl">XP gagnés</div></div>
+          </div>
+          <button class="btn-home" onclick="endSession()">Retour à l'accueil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: COURS -->
+  <div class="screen" id="screen-cours">
+    <div class="courses-header">
+      <div class="courses-title">📚 Fiches de cours</div>
+      <div class="courses-sub">Elio génère une fiche personnalisée pour chaque chapitre</div>
+    </div>
+    <div id="courses-list"></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="switchScreen('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Accueil</span>
+    </button>
+    <button class="nav-btn" id="nav-elio" onclick="switchScreen('elio')">
+      <span class="nav-icon">⚔️</span>
+      <span class="nav-label">Elio</span>
+    </button>
+    <button class="nav-btn" id="nav-cours" onclick="switchScreen('cours')">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Cours</span>
+    </button>
+  </div>
+</div>
+
+<!-- FICHE DETAIL OVERLAY -->
+<div class="fiche-overlay" id="fiche-overlay">
+  <div class="fiche-header">
+    <button class="btn-back-fiche" onclick="closeFiche()">← Retour</button>
+    <div class="fiche-header-title" id="fiche-title"></div>
+  </div>
+  <div class="fiche-content" id="fiche-content">
+    <div class="fiche-loading">
+      <span class="fiche-loading-elio">⚔️</span>
+      <div>Elio prépare ta fiche...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// CONFIG
+// ============================================
+const SUPABASE_URL='https://sosykwzdarjwliilakgk.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvc3lrd3pkYXJqd2xpaWxha2drIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzE0MDMsImV4cCI6MjA4OTE0NzQwM30.wjWRuf4njfTBGEZcbWq6yUmBPBdOvng9B0KV8I1P9bk';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const BACKEND='https://educoach-poc-production.up.railway.app';
+
+// ============================================
+// PROGRAMME
+// ============================================
+const PROGRAMME = {
+  '🔢 Calcul numérique': [
+    {id:'calc1',name:'Fractions',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'calc2',name:'Puissances',level:'4e',levels:['4e','3e']},
+    {id:'calc3',name:'Racines carrées',level:'3e',levels:['3e']},
+    {id:'calc4',name:'Notation scientifique',level:'4e',levels:['4e','3e']},
+    {id:'calc5',name:'Priorités opératoires',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '🔤 Algèbre': [
+    {id:'alg1',name:'Développement & factorisation',level:'4e',levels:['4e','3e']},
+    {id:'alg2',name:'Identités remarquables',level:'3e',levels:['3e']},
+    {id:'alg3',name:'Équations du 1er degré',level:'4e',levels:['4e','3e']},
+    {id:'alg4',name:'Systèmes d\'équations',level:'3e',levels:['3e']},
+    {id:'alg5',name:'Inéquations',level:'3e',levels:['3e']},
+  ],
+  '📐 Géométrie': [
+    {id:'geo1',name:'Théorème de Pythagore',level:'4e',levels:['4e','3e']},
+    {id:'geo2',name:'Théorème de Thalès',level:'3e',levels:['3e']},
+    {id:'geo3',name:'Trigonométrie',level:'3e',levels:['3e']},
+    {id:'geo4',name:'Aires et périmètres',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'geo5',name:'Volumes',level:'3e',levels:['3e']},
+    {id:'geo6',name:'Transformations',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '📈 Fonctions': [
+    {id:'fonc1',name:'Proportionnalité',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'fonc2',name:'Fonctions linéaires et affines',level:'3e',levels:['3e']},
+    {id:'fonc3',name:'Lecture de graphiques',level:'4e/3e',levels:['5e','4e','3e']},
+  ],
+  '📊 Stats & Probabilités': [
+    {id:'stat1',name:'Moyenne, médiane, étendue',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'stat2',name:'Diagrammes',level:'4e/3e',levels:['5e','4e','3e']},
+    {id:'stat3',name:'Probabilités simples',level:'4e',levels:['4e','3e']},
+    {id:'stat4',name:'Arbres de probabilités',level:'3e',levels:['3e']},
+  ],
+};
+
+// ============================================
+// STATE
+// ============================================
+const state = {
+  studentName: '',
+  studentLevel: null,
+  checkedChapters: new Set(),
+  xp: 0,
+  sessions: 0,
+  totalExos: 0,
+  streak: 1,
+  scores: {calcul:0, alg:0, geo:0, fonc:0, stat:0},
+  diagDone: false,
+  // Session
+  phase: 'idle', // idle | diagnostic | training
+  diagQuestions: [],
+  diagIndex: 0,
+  diagScores: {calcul:[], alg:[], geo:[], fonc:[], stat:[]},
+  currentExercise: null,
+  sessionExos: 0,
+  sessionCorrect: 0,
+  sessionStart: null,
+  explainedThemes: {},
+  trainingPlan: null,
+  todayTheme: null,
+};
+
+const LEVELS = [
+  {min:0,max:99,emoji:'🥚',title:'Rookie',num:1},
+  {min:100,max:249,emoji:'⚔️',title:'Apprenti',num:2},
+  {min:250,max:499,emoji:'🛡️',title:'Guerrier',num:3},
+  {min:500,max:899,emoji:'🧙',title:'Mage',num:4},
+  {min:900,max:1499,emoji:'🔥',title:'Élite',num:5},
+  {min:1500,max:2499,emoji:'💎',title:'Légende',num:6},
+  {min:2500,max:99999,emoji:'👑',title:'Grand Maître',num:7},
+];
+
+const BADGES = [
+  {id:'first',emoji:'🎯',name:'Premier pas',condition:s=>s.totalExos>=1},
+  {id:'streak3',emoji:'🔥',name:'3 jours',condition:s=>s.streak>=3},
+  {id:'diag',emoji:'📋',name:'Diagnostiqué',condition:s=>s.diagDone},
+  {id:'exo10',emoji:'⚡',name:'10 exos',condition:s=>s.totalExos>=10},
+  {id:'score80',emoji:'🏆',name:'Score 80%',condition:s=>avgScore()>=80},
+  {id:'exo50',emoji:'💫',name:'50 exos',condition:s=>s.totalExos>=50},
+  {id:'mage',emoji:'🧙',name:'Mage',condition:s=>state.xp>=500},
+  {id:'legend',emoji:'💎',name:'Légende',condition:s=>state.xp>=1500},
+];
+
+// ============================================
+// AUTH
+// ============================================
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active',tab==='signup');
+  document.getElementById('form-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('form-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-msg').className='auth-msg';
+}
+function showAuthMsg(msg,type){const el=document.getElementById('auth-msg');el.textContent=msg;el.className='auth-msg '+type}
+
+async function login(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  if(!email||!pw){showAuthMsg('Remplis tous les champs !','error');return}
+  const btn=document.getElementById('btn-login');btn.disabled=true;btn.textContent='...';
+  const{error}=await sb.auth.signInWithPassword({email,password:pw});
+  btn.disabled=false;btn.textContent='Entrer dans le royaume →';
+  if(error)showAuthMsg('Email ou mot de passe incorrect.','error');
+}
+async function signup(){
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const pw=document.getElementById('signup-password').value;
+  if(!name||!email||!pw){showAuthMsg('Remplis tous les champs !','error');return}
+  const btn=document.getElementById('btn-signup');btn.disabled=true;btn.textContent='...';
+  const{error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});
+  btn.disabled=false;btn.textContent='Créer mon compte →';
+  if(error)showAuthMsg('Erreur : '+error.message,'error');
+  else showAuthMsg('Compte créé ! Vérifie ton email.','success');
+}
+async function loginGoogle(){
+  await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
+}
+
+sb.auth.onAuthStateChange((event,session)=>{
+  if(session?.user){
+    const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
+    state.studentName=name;
+    document.getElementById('auth-screen').style.display='none';
+    loadProgress();
+    const saved=localStorage.getItem('educoach_level');
+    if(!saved){
+      document.getElementById('setup-screen').classList.add('show');
+    } else {
+      state.studentLevel=saved;
+      state.checkedChapters=new Set(JSON.parse(localStorage.getItem('educoach_chapters')||'[]'));
+      loadProgress();
+      showApp();
+    }
+  }
+});
+
+// ============================================
+// SETUP
+// ============================================
+let selectedLevel = null;
+
+function selectLevel(lvl){
+  selectedLevel=lvl;
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('lvl-'+lvl).classList.add('selected');
+  document.getElementById('btn-next-level').disabled=false;
+}
+
+function goToChapters(){
+  if(!selectedLevel)return;
+  state.studentLevel=selectedLevel;
+  document.getElementById('setup-step-1').classList.remove('active');
+  document.getElementById('setup-step-2').classList.add('active');
+  buildChaptersList();
+}
+
+function buildChaptersList(){
+  const container=document.getElementById('chapters-list');
+  container.innerHTML='';
+  Object.entries(PROGRAMME).forEach(([group,chapters])=>{
+    const title=document.createElement('div');
+    title.className='chapter-group-title';
+    title.textContent=group;
+    container.appendChild(title);
+    chapters.forEach(ch=>{
+      const isAvailable=ch.levels.includes(selectedLevel);
+      const item=document.createElement('div');
+      item.className='chapter-item'+(isAvailable?' checked':'');
+      item.id='ch-'+ch.id;
+      if(isAvailable)state.checkedChapters.add(ch.id);
+      item.innerHTML=`<div class="chapter-checkbox">${isAvailable?'✓':''}</div><div class="chapter-name">${ch.name}</div><span class="chapter-level">${ch.level}</span>`;
+      item.onclick=()=>toggleChapter(ch.id,item,isAvailable);
+      container.appendChild(item);
+    });
+  });
+}
+
+function toggleChapter(id,el,wasAvailable){
+  if(state.checkedChapters.has(id)){
+    state.checkedChapters.delete(id);
+    el.classList.remove('checked');
+    el.querySelector('.chapter-checkbox').textContent='';
+  } else {
+    state.checkedChapters.add(id);
+    el.classList.add('checked');
+    el.querySelector('.chapter-checkbox').textContent='✓';
+  }
+}
+
+function finishSetup(){
+  localStorage.setItem('educoach_level',state.studentLevel);
+  localStorage.setItem('educoach_chapters',JSON.stringify([...state.checkedChapters]));
+  document.getElementById('setup-screen').classList.remove('show');
+  showApp();
+  setTimeout(()=>{switchScreen('elio');startDiagnostic();},400);
+}
+
+// ============================================
+// APP
+// ============================================
+function showApp(){
+  document.getElementById('app').classList.add('visible');
+  updateHomeScreen();
+  buildCoursesList();
+  generateStars();
+}
+
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='home')updateHomeScreen();
+}
+
+function goToElio(){
+  switchScreen('elio');
+  if(state.phase==='idle'&&!state.diagDone){
+    startDiagnostic();
+  } else if(state.phase==='idle'&&state.diagDone){
+    startTraining();
+  }
+}
+
+// ============================================
+// HOME SCREEN
+// ============================================
+function updateHomeScreen(){
+  document.getElementById('home-name').textContent=state.studentName;
+  document.getElementById('home-streak').textContent=state.streak;
+  // XP
+  const lvl=getLevelData();
+  document.getElementById('xp-emoji').textContent=lvl.emoji;
+  document.getElementById('xp-title').textContent=lvl.title;
+  document.getElementById('xp-level-num').textContent=lvl.num;
+  const nextLvl=LEVELS[lvl.num]||LEVELS[LEVELS.length-1];
+  const xpInLevel=state.xp-lvl.min;
+  const xpNeeded=lvl.max-lvl.min+1;
+  const pct=Math.min(100,Math.round((xpInLevel/xpNeeded)*100));
+  document.getElementById('xp-current').textContent=state.xp;
+  document.getElementById('xp-next').textContent=lvl.max+1;
+  document.getElementById('xp-bar').style.width=pct+'%';
+  document.getElementById('xp-bar-next').textContent=(lvl.max+1)+' XP';
+  // Stats
+  document.getElementById('stat-sessions').textContent=state.sessions;
+  document.getElementById('stat-exos').textContent=state.totalExos;
+  const avg=avgScore();
+  document.getElementById('stat-score-home').textContent=avg>0?avg+'%':'—';
+  // Today
+  if(!state.diagDone){
+    document.getElementById('today-theme').textContent='Commencer le diagnostic';
+    document.getElementById('today-sub').textContent='20 questions pour évaluer ton niveau';
+  } else {
+    const weak=getWeakTheme();
+    document.getElementById('today-theme').textContent='Session '+weak;
+    document.getElementById('today-sub').textContent='10 exercices · ~20 min';
+  }
+  // Theme bars
+  const tMap={calcul:'calcul',alg:'alg',geo:'geo',fonc:'fonc',stat:'stat'};
+  Object.entries(tMap).forEach(([k,v])=>{
+    const pct=state.scores[k]||0;
+    document.getElementById('tp-'+v).style.width=pct+'%';
+    document.getElementById('tpp-'+v).textContent=pct+'%';
+  });
+  // Badges
+  buildBadges();
+}
+
+function buildBadges(){
+  const grid=document.getElementById('badges-grid');
+  grid.innerHTML=BADGES.map(b=>{
+    const earned=b.condition(state);
+    return `<div class="badge-card${earned?' earned':' locked'}">
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function getLevelData(){
+  return LEVELS.find(l=>state.xp>=l.min&&state.xp<=l.max)||LEVELS[LEVELS.length-1];
+}
+
+function avgScore(){
+  const vals=Object.values(state.scores).filter(v=>v>0);
+  return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length):0;
+}
+
+function getWeakTheme(){
+  const names={calcul:'Calcul',alg:'Algèbre',geo:'Géométrie',fonc:'Fonctions',stat:'Stats'};
+  const sorted=Object.entries(state.scores).sort((a,b)=>a[1]-b[1]);
+  return names[sorted[0][0]]||'Maths';
+}
+
+// ============================================
+// STARS GENERATION
+// ============================================
+function generateStars(){
+  const sky=document.getElementById('medieval-sky');
+  for(let i=0;i<60;i++){
+    const star=document.createElement('div');
+    star.className='star';
+    const size=Math.random()*3+1;
+    star.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*60}%;left:${Math.random()*100}%;--d:${2+Math.random()*3}s;--delay:${Math.random()*3}s;--o:${0.4+Math.random()*0.6}`;
+    sky.appendChild(star);
+  }
+}
+
+// ============================================
+// ELIO INTERACTION
+// ============================================
+function elioTap(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('bounce');
+  setTimeout(()=>char.classList.remove('bounce'),500);
+}
+
+function elioBounce(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('bounce');
+  setTimeout(()=>char.classList.remove('bounce'),500);
+}
+
+function elioShake(){
+  const char=document.getElementById('elio-char');
+  char.classList.remove('bounce','shake');
+  void char.offsetWidth;
+  char.classList.add('shake');
+  setTimeout(()=>char.classList.remove('shake'),400);
+}
+
+// ============================================
+// SPEECH BUBBLE
+// ============================================
+function showSpeech(text, showExercise=null, continueCallback=null){
+  const bubble=document.getElementById('speech-bubble');
+  const typing=document.getElementById('speech-typing');
+  const textEl=document.getElementById('speech-text');
+  const exCard=document.getElementById('exercise-card');
+  const continueEl=document.getElementById('speech-continue');
+  typing.style.display='none';
+  textEl.style.display='block';
+  textEl.innerHTML=text
+    .replace(/#{1,3}\s*/g,'')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n/g,'<br>');
+  bubble.style.display='block';
+  if(showExercise){
+    exCard.style.display='block';
+    document.getElementById('ex-topic').textContent=showExercise.topic||'';
+    document.getElementById('ex-question').textContent=showExercise.question||'';
+    const stars=Array.from({length:5},(_,i)=>`<span>${i<(showExercise.difficulty||1)?'⭐':'☆'}</span>`).join('');
+    document.getElementById('ex-stars').innerHTML=stars;
+    continueEl.style.display='none';
+    state.pendingContinue=null;
+    // Always enable input when exercise is shown
+    setTimeout(()=>{
+      document.getElementById('answer-input').disabled=false;
+      document.getElementById('btn-send').disabled=false;
+      document.getElementById('answer-input').focus();
+    },100);
+  } else if(continueCallback){
+    continueEl.style.display='flex';
+    document.getElementById('answer-input').disabled=true;
+    document.getElementById('btn-send').disabled=true;
+    state.pendingContinue=continueCallback;
+  } else {
+    continueEl.style.display='none';
+    // Free-form speech with no exercise and no continue - keep input as-is
+  }
+}
+
+function onContinue(){
+  document.getElementById('speech-continue').style.display='none';
+  if(state.pendingContinue){
+    const cb=state.pendingContinue;
+    state.pendingContinue=null;
+    cb();
+  }
+}
+
+function showTypingBubble(){
+  const bubble=document.getElementById('speech-bubble');
+  const typing=document.getElementById('speech-typing');
+  const textEl=document.getElementById('speech-text');
+  const exCard=document.getElementById('exercise-card');
+  const continueEl=document.getElementById('speech-continue');
+  typing.style.display='flex';
+  textEl.style.display='none';
+  exCard.style.display='none';
+  continueEl.style.display='none';
+  bubble.style.display='block';
+  // Do NOT disable input here - let showSpeech manage it
+}
+
+// ============================================
+// API CALL
+// ============================================
+async function callAPI(messages, system, maxTokens=1000){
+  const r=await fetch(`${BACKEND}/v1/messages`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})
+  });
+  const d=await r.json();
+  return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+}
+
+const ELIO_SYSTEM=`Tu es Elio, un chevalier-coach bienveillant dans un univers médiéval fantastique. Tu aides les élèves de collège à préparer le brevet de maths. Ton ton : naturel, direct, motivant. Comme un grand frère qui s'y connaît. Réponses courtes (max 100 mots). Jamais de jargon de prof.`;
+
+// ============================================
+// DIAGNOSTIC
+// ============================================
+async function startDiagnostic(){
+  state.phase='diagnostic';
+  state.diagQuestions=[];
+  state.diagIndex=0;
+  state.diagScores={calcul:[],alg:[],geo:[],fonc:[],stat:[]};
+  document.getElementById('progress-top').style.display='flex';
+  document.getElementById('answer-input').disabled=false;
+  document.getElementById('btn-send').disabled=false;
+
+  const checkedList=[...state.checkedChapters].join(', ');
+  const diagPrompt=`Tu es Elio. Crée un diagnostic pour un élève de ${state.studentLevel||'3e'}.
+Chapitres étudiés : ${checkedList}
+Génère exactement 20 questions UNIQUEMENT sur ces chapitres (4 par thème si possible, sinon adapte).
+Réponds UNIQUEMENT avec ce JSON :
+{"questions":[{"id":1,"theme":"calcul","topic":"fractions","question":"énoncé","expected":"réponse exacte","difficulty":2},...]}
+Thèmes possibles : calcul, alg, geo, fonc, stat. difficulty 1-3. expected = réponse courte.`;
+
+  showTypingBubble();
+  showSpeech('');
+  document.getElementById('speech-typing').style.display='flex';
+  document.getElementById('speech-text').style.display='none';
+
+  try{
+    const resp=await callAPI([{role:'user',content:diagPrompt}],ELIO_SYSTEM,2500);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const data=JSON.parse(clean);
+    state.diagQuestions=data.questions;
+    showSpeech(`Salut ${state.studentName} ! Je suis Elio ⚔️ On commence par 20 questions pour voir ton niveau. Pas de stress — c'est juste pour créer ton plan perso !`, null, ()=>askDiagQuestion(0));
+  }catch(e){
+    console.error(e);
+    showSpeech('Oups, problème technique 😅 Recharge la page !');
+  }
+}
+
+function askDiagQuestion(i){
+  if(i>=state.diagQuestions.length){finishDiagnostic();return}
+  state.diagIndex=i;
+  const q=state.diagQuestions[i];
+  state.currentExercise=q;
+  const pct=Math.round((i/state.diagQuestions.length)*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('progress-count').textContent=`${i+1}/${state.diagQuestions.length}`;
+  const intro=i===0?'Voici ta première question :':i<5?'Continue !':`Question ${i+1}/20 :`;
+  showSpeech(intro, {topic:q.topic||q.theme, question:q.question, difficulty:q.difficulty||2});
+}
+
+async function processDiagAnswer(answer){
+  const q=state.diagQuestions[state.diagIndex];
+  showTypingBubble();
+  const evalPrompt=`Évalue cette réponse brevet.
+Question: ${q.question}
+Réponse attendue: ${q.expected}
+Réponse élève: ${answer}
+Réponds UNIQUEMENT avec ce JSON: {"correct":true/false,"partial":0.0-1.0,"comment":"feedback max 15 mots"}
+Sois souple sur les équivalents.`;
+  try{
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,200);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const result=JSON.parse(clean);
+    const isCorrect=result.correct||result.partial>=0.7;
+    const score=result.correct?1:(result.partial||0);
+    const theme=normalizeTheme(q.theme);
+    if(!state.diagScores[theme])state.diagScores[theme]=[];
+    state.diagScores[theme].push(score);
+    if(isCorrect){
+      elioBounce();
+      showFeedback(true,'Bonne réponse ! ✅',result.comment);
+    } else {
+      elioShake();
+      showFeedback(false,'Pas tout à fait ❌',result.comment+' La réponse était : '+q.expected);
+    }
+  }catch(e){
+    askDiagQuestion(state.diagIndex+1);
+  }
+}
+
+async function finishDiagnostic(){
+  state.diagDone=true;
+  state.phase='idle';
+  document.getElementById('progress-top').style.display='none';
+  // Compute scores
+  const scores=computeScores();
+  state.scores=scores;
+  state.xp+=50;
+  saveProgress();
+  // Show plan
+  const planPrompt=`Tu es Elio. Diagnostic terminé pour ${state.studentName} (${state.studentLevel}).
+Résultats : Calcul ${scores.calcul}%, Algèbre ${scores.alg}%, Géométrie ${scores.geo}%, Fonctions ${scores.fonc}%, Stats ${scores.stat}%
+Présente les résultats brièvement et annonce le plan (thème le plus faible en premier). Max 120 mots. Ton naturel de grand frère.`;
+  showTypingBubble();
+  try{
+    const resp=await callAPI([{role:'user',content:planPrompt}],ELIO_SYSTEM,400);
+    state.trainingPlan=scores;
+    state.todayTheme=getWeakTheme();
+    updateHomeScreen();
+    const correctCount=Object.values(state.diagScores).flat().filter(s=>s>=0.7).length;
+    const scoreVal=Math.round((correctCount/state.diagQuestions.length)*100);
+    showSpeech(resp, null, ()=>showSessionEndScreen(state.diagQuestions.length, scoreVal, 50));
+  }catch(e){
+    showSpeech('Diagnostic terminé ! Je prépare ton plan...');
+    state.trainingPlan=computeScores();
+    updateHomeScreen();
+  }
+}
+
+// ============================================
+// TRAINING
+// ============================================
+async function startTraining(){
+  state.phase='training';
+  state.sessionExos=0;
+  state.sessionCorrect=0;
+  state.sessionStart=Date.now();
+  state.explainedThemes={};
+  document.getElementById('progress-top').style.display='flex';
+  document.getElementById('answer-input').disabled=false;
+  document.getElementById('btn-send').disabled=false;
+  document.getElementById('session-end').classList.remove('show');
+  showTypingBubble();
+  await generateExercise();
+}
+
+async function generateExercise(){
+  const scores=state.trainingPlan||state.scores;
+  const weak=Object.entries(scores).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k])=>k);
+  const themeNames={calcul:'Calcul numérique',alg:'Algèbre',geo:'Géométrie',fonc:'Fonctions',stat:'Stats & Proba'};
+  const firstTheme=weak[0];
+  const firstScore=scores[firstTheme]||0;
+
+  // Explain if needed
+  if(firstScore<50&&!state.explainedThemes[firstTheme]){
+    state.explainedThemes[firstTheme]=true;
+    const explainPrompt=`Tu es Elio. Le thème "${themeNames[firstTheme]}" est à ${firstScore}% — point faible.
+Mini-leçon en 3 parties :
+📖 Concept (2-3 lignes)
+✏️ Exemple résolu
+❓ Question de contrôle
+Max 150 mots. Ton naturel.`;
+    try{
+      const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,500);
+      state.phase='explanation';
+      showSpeech(resp);
+      return;
+    }catch(e){}
+  }
+
+  const exPrompt=`Tu es Elio. Génère UN exercice de maths brevet adapté.
+Points faibles : ${weak.map(k=>themeNames[k]).join(', ')}
+Chapitres étudiés : ${[...state.checkedChapters].join(', ')}
+Niveau : ${state.studentLevel||'3e'}
+Réponds UNIQUEMENT avec ce JSON :
+{"type":"exercice","topic":"nom","difficulty":1-5,"question":"énoncé","expected":"réponse exacte","hint":"indice"}`;
+  try{
+    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,400);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const ex=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    state.currentExercise=ex;
+    const n=state.sessionExos+1;
+    document.getElementById('progress-fill').style.width=`${(n/10)*100}%`;
+    document.getElementById('progress-count').textContent=`${n}/10`;
+    showSpeech(`Exercice ${n}/10 — allez ! 💪`, ex);
+  }catch(e){
+    showSpeech('Petit bug 😅 Tape "suivant" pour continuer.');
+  }
+}
+
+async function processTrainingAnswer(answer){
+  if(!state.currentExercise)return;
+  showTypingBubble();
+  const evalPrompt=`Tu es Elio. Évalue la réponse.
+Question: ${state.currentExercise.question}
+Réponse attendue: ${state.currentExercise.expected}
+Réponse élève: ${answer}
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"feedback":"explication max 60 mots","encouragement":"phrase courte"}`;
+  try{
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,300);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const result=JSON.parse(clean);
+    if(result.correct){
+      elioBounce();
+      state.sessionCorrect++;
+      addXP(10);
+      updateTopicScore(state.currentExercise.topic,true);
+    } else {
+      elioShake();
+      updateTopicScore(state.currentExercise.topic,false);
+    }
+    state.sessionExos++;
+    state.totalExos++;
+    showFeedback(result.correct,result.correct?'Bonne réponse ! ✅':'Pas tout à fait ❌',result.feedback+' '+result.encouragement);
+  }catch(e){
+    state.sessionExos++;
+    state.totalExos++;
+    showFeedback(true,'Continue !','');
+  }
+}
+
+// ============================================
+// FEEDBACK
+// ============================================
+function showFeedback(correct, title, text){
+  const overlay=document.getElementById('feedback-overlay');
+  overlay.className='feedback-overlay show '+(correct?'feedback-correct-bg':'feedback-wrong-bg');
+  document.getElementById('feedback-emoji').textContent=correct?'🎉':'😅';
+  document.getElementById('feedback-title').textContent=title;
+  document.getElementById('feedback-text').textContent=text;
+  document.getElementById('answer-input').value='';
+}
+
+function nextQuestion(){
+  document.getElementById('feedback-overlay').classList.remove('show');
+  document.getElementById('feedback-overlay').className='feedback-overlay';
+  if(state.phase==='diagnostic'){
+    askDiagQuestion(state.diagIndex+1);
+  } else if(state.phase==='explanation'){
+    state.phase='training';
+    generateExercise();
+  } else if(state.phase==='training'){
+    if(state.sessionExos>=10){
+      const score=Math.round((state.sessionCorrect/state.sessionExos)*100);
+      const xpGained=state.sessionCorrect*10+20;
+      addXP(xpGained);
+      state.sessions++;
+      saveProgress();
+      showSessionEndScreen(state.sessionExos,score,xpGained);
+    } else {
+      generateExercise();
+    }
+  }
+}
+
+function showSessionEndScreen(exos, score, xpGained){
+  document.getElementById('answer-input').disabled=true;
+  document.getElementById('btn-send').disabled=true;
+  document.getElementById('progress-top').style.display='none';
+  const lvl=getLevelData();
+  const emoji=score>=80?'🏆':score>=60?'🎯':'⚔️';
+  document.getElementById('end-emoji').textContent=emoji;
+  document.getElementById('end-title').textContent=lvl.emoji+' '+lvl.title+' — Session terminée !';
+  document.getElementById('end-sub').textContent=score>=80?'T\'as cartonné ! 🔥':score>=60?'Bonne session, continue !':'Bien joué d\'avoir bossé !';
+  document.getElementById('end-exos').textContent=exos;
+  document.getElementById('end-score').textContent=score+'%';
+  document.getElementById('end-xp').textContent='+'+xpGained;
+  document.getElementById('session-end').classList.add('show');
+}
+
+function endSession(){
+  document.getElementById('session-end').classList.remove('show');
+  state.phase='idle';
+  saveProgress();
+  updateHomeScreen();
+  switchScreen('home');
+}
+
+function exitSession(){
+  state.phase='idle';
+  document.getElementById('progress-top').style.display='none';
+  document.getElementById('answer-input').disabled=true;
+  document.getElementById('btn-send').disabled=true;
+  showSpeech('Session interrompue. Reviens quand tu veux ! 💪');
+  switchScreen('home');
+}
+
+// ============================================
+// ANSWER
+// ============================================
+async function submitAnswer(){
+  const input=document.getElementById('answer-input');
+  const answer=input.value.trim();
+  if(!answer)return;
+  input.value='';
+  document.getElementById('btn-send').disabled=true;
+  if(state.phase==='diagnostic'){
+    await processDiagAnswer(answer);
+  } else if(state.phase==='training'||state.phase==='explanation'){
+    if(state.phase==='explanation'){
+      state.phase='training';
+    }
+    await processTrainingAnswer(answer);
+  }
+  document.getElementById('btn-send').disabled=false;
+}
+
+function handleAnswerKey(e){if(e.key==='Enter')submitAnswer()}
+
+// ============================================
+// COURSES
+// ============================================
+function buildCoursesList(){
+  const container=document.getElementById('courses-list');
+  container.innerHTML='';
+  Object.entries(PROGRAMME).forEach(([group,chapters])=>{
+    const groupEl=document.createElement('div');
+    groupEl.className='course-group';
+    groupEl.innerHTML=`<div class="course-group-title">${group}</div>`;
+    chapters.forEach(ch=>{
+      const available=state.checkedChapters.has(ch.id);
+      const card=document.createElement('div');
+      card.className='course-card'+(available?'':' locked');
+      card.innerHTML=`<div class="course-card-left"><div class="course-icon">${group.split(' ')[0]}</div><div><div class="course-name">${ch.name}</div><div class="course-level">${ch.level}${available?'':' — Non étudié'}</div></div></div><div class="course-arrow">→</div>`;
+      if(available)card.onclick=()=>openFiche(ch);
+      groupEl.appendChild(card);
+    });
+    container.appendChild(groupEl);
+  });
+}
+
+async function openFiche(chapter){
+  document.getElementById('fiche-title').textContent=chapter.name;
+  document.getElementById('fiche-overlay').classList.add('show');
+  document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading"><span class="fiche-loading-elio">⚔️</span><div>Elio prépare ta fiche...</div></div>`;
+
+  const fichePrompt=`Tu es Elio. Génère une fiche de cours complète sur "${chapter.name}" pour un élève de ${state.studentLevel||'3e'}.
+
+Format ta réponse en JSON :
+{
+  "resume": "résumé du concept en 3-4 phrases claires",
+  "formules": ["formule 1", "formule 2"],
+  "exemple": "exemple résolu pas à pas",
+  "tips": ["astuce 1", "astuce 2", "astuce 3"],
+  "erreurs": ["erreur classique 1", "erreur classique 2"]
+}`;
+
+  try{
+    const resp=await callAPI([{role:'user',content:fichePrompt}],ELIO_SYSTEM,800);
+    const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
+    const data=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    renderFiche(data,chapter.name);
+  }catch(e){
+    document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading">Oups, problème technique 😅 Réessaie !</div>`;
+  }
+}
+
+function renderFiche(data,name){
+  let html='';
+  html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">📖 Résumé</div><div class="fiche-text">${escH(data.resume)}</div></div>`;
+  if(data.formules&&data.formules.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">🔢 Formules clés</div>`;
+    data.formules.forEach(f=>{html+=`<div class="fiche-tip"><div class="fiche-tip-icon">📌</div><div class="fiche-tip-text" style="font-family:'JetBrains Mono',monospace;font-weight:600">${escH(f)}</div></div>`});
+    html+=`</div>`;
+  }
+  html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">✏️ Exemple</div><div class="fiche-text">${escH(data.exemple)}</div></div>`;
+  if(data.tips&&data.tips.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">💡 Tips d'Elio</div>`;
+    data.tips.forEach(t=>{html+=`<div class="fiche-tip"><div class="fiche-tip-icon">⚡</div><div class="fiche-tip-text">${escH(t)}</div></div>`});
+    html+=`</div>`;
+  }
+  if(data.erreurs&&data.erreurs.length){
+    html+=`<div class="fiche-section animate-in"><div class="fiche-section-title">⚠️ Erreurs classiques</div>`;
+    data.erreurs.forEach(e=>{html+=`<div class="fiche-tip" style="border-left-color:var(--red)"><div class="fiche-tip-icon">❌</div><div class="fiche-tip-text">${escH(e)}</div></div>`});
+    html+=`</div>`;
+  }
+  document.getElementById('fiche-content').innerHTML=html;
+}
+
+function closeFiche(){
+  document.getElementById('fiche-overlay').classList.remove('show');
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function normalizeTheme(theme){
+  const map={calcul:'calcul',alg:'alg',algebre:'alg',geo:'geo',geometrie:'geo',fonc:'fonc',fonctions:'fonc',stat:'stat',statistiques:'stat'};
+  return map[theme?.toLowerCase()]||theme||'calcul';
+}
+
+function computeScores(){
+  const avg=(arr)=>arr&&arr.length?Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*100):0;
+  return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),fonc:avg(state.diagScores.fonc),stat:avg(state.diagScores.stat)};
+}
+
+const tMap={'calcul':'calcul','algèbre':'alg','géométrie':'geo','statistiques':'stat','probabilités':'stat','fonctions':'fonc','calcul numérique':'calcul','algèbre':'alg'};
+function updateTopicScore(topic,correct){
+  if(!topic)return;
+  const k=Object.keys(tMap).find(t=>topic.toLowerCase().includes(t));
+  if(!k)return;
+  const key=tMap[k];
+  state.scores[key]=correct?Math.min(100,(state.scores[key]||0)+8):Math.max(0,(state.scores[key]||0)-2);
+}
+
+function addXP(amount){
+  state.xp+=amount;
+  saveProgress();
+}
+
+function saveProgress(){
+  localStorage.setItem('educoach_progress',JSON.stringify({
+    xp:state.xp,sessions:state.sessions,totalExos:state.totalExos,
+    streak:state.streak,scores:state.scores,diagDone:state.diagDone,
+    trainingPlan:state.trainingPlan,todayTheme:state.todayTheme
+  }));
+}
+
+function loadProgress(){
+  const saved=localStorage.getItem('educoach_progress');
+  if(saved){
+    const d=JSON.parse(saved);
+    Object.assign(state,d);
+  }
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function escH(text){if(!text)return'';const d=document.createElement('div');d.appendChild(document.createTextNode(String(text)));return d.innerHTML}
+
+// Invite token
+const urlParams=new URLSearchParams(window.location.search);
+const inviteToken=urlParams.get('invite');
+async function handleInviteToken(userId){
+  if(!inviteToken)return;
+  try{
+    const r=await fetch(`${BACKEND}/api/student/accept-invite`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({invite_token:inviteToken,user_id:userId})});
+    const data=await r.json();
+    if(data.student_id){localStorage.setItem('educoach_student_id',data.student_id);state.studentId=data.student_id;}
+  }catch(e){console.log('invite error:',e)}
+}
+if(inviteToken){
+  sb.auth.getSession().then(({data})=>{if(data?.session?.user)handleInviteToken(data.session.user.id)});
+  sb.auth.onAuthStateChange(async(event,session)=>{if(session?.user)handleInviteToken(session.user.id)});
+}
+
+// PROFILE
+const EMOJIS=['🧑','👦','👧','🧒','👨','👩','🧔','👱','🦸','🧙','🧝','🧛','🦊','🐺','🦁','🐯','🦄','🐉','🔥','⚔️','🛡️','🏹','💎','👑'];
+function openProfile(){
+  document.getElementById('profile-overlay').classList.add('show');
+  const p=loadProfileData();
+  document.getElementById('profile-firstname').value=p.firstname||state.studentName||'';
+  document.getElementById('profile-lastname').value=p.lastname||'';
+  document.getElementById('profile-school').value=p.school||'';
+  document.getElementById('profile-emoji-display').textContent=p.emoji||'🧑';
+  if(p.selfLevel)selectSelfLevel(p.selfLevel,false);
+  buildEmojiPicker();
+}
+function closeProfile(){document.getElementById('profile-overlay').classList.remove('show')}
+function buildEmojiPicker(){
+  const grid=document.getElementById('emoji-picker');
+  grid.innerHTML=EMOJIS.map(e=>`<div class="emoji-option" onclick="selectEmoji('${e}')">${e}</div>`).join('');
+}
+function toggleEmojiPicker(){document.getElementById('emoji-picker').classList.toggle('show')}
+function selectEmoji(emoji){document.getElementById('profile-emoji-display').textContent=emoji;document.getElementById('emoji-picker').classList.remove('show')}
+let selectedSelfLevel=null;
+function selectSelfLevel(level,save=true){
+  selectedSelfLevel=level;
+  ['nul','moyen','bien','expert'].forEach(l=>{document.getElementById('sl-'+l)?.classList.toggle('selected',l===level)});
+}
+function saveProfile(){
+  const p={firstname:document.getElementById('profile-firstname').value.trim(),lastname:document.getElementById('profile-lastname').value.trim(),school:document.getElementById('profile-school').value.trim(),emoji:document.getElementById('profile-emoji-display').textContent,selfLevel:selectedSelfLevel};
+  localStorage.setItem('educoach_profile',JSON.stringify(p));
+  if(p.firstname)state.studentName=p.firstname;
+  updateHomeScreen();closeProfile();
+}
+function loadProfileData(){try{return JSON.parse(localStorage.getItem('educoach_profile')||'{}')}catch(e){return{}}}
+
+// BADGE MODAL
+let currentBadgeData=null;
+function openBadgeModal(badge){
+  currentBadgeData=badge;
+  document.getElementById('bm-emoji').textContent=badge.emoji;
+  document.getElementById('bm-name').textContent=badge.name;
+  document.getElementById('bm-desc').textContent=badge.earned?'Badge débloqué ! 🎉':'Continue pour débloquer ce badge.';
+  document.getElementById('badge-modal').classList.add('show');
+  if(badge.earned)setTimeout(()=>drawBadgeCanvas(badge),100);
+}
+function closeBadgeModal(){document.getElementById('badge-modal').classList.remove('show')}
+function drawBadgeCanvas(badge){
+  const canvas=document.getElementById('badge-canvas');
+  const ctx=canvas.getContext('2d');
+  const grd=ctx.createLinearGradient(0,0,280,160);
+  grd.addColorStop(0,'#1A1335');grd.addColorStop(1,'#0F0A1E');
+  ctx.fillStyle=grd;ctx.beginPath();ctx.roundRect(0,0,280,160,12);ctx.fill();
+  ctx.strokeStyle='#F5C842';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(2,2,276,156,11);ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  for(let i=0;i<20;i++){ctx.beginPath();ctx.arc(Math.random()*280,Math.random()*160,Math.random()*1.5,0,Math.PI*2);ctx.fill()}
+  ctx.font='48px serif';ctx.textAlign='center';ctx.fillText(badge.emoji,80,100);
+  ctx.font='bold 16px Arial';ctx.fillStyle='#F5C842';ctx.textAlign='left';ctx.fillText(badge.name,120,70);
+  const p=loadProfileData();const name=(p.firstname||state.studentName||'Élève')+' '+(p.lastname||'');
+  ctx.font='13px Arial';ctx.fillStyle='#EDE9FF';ctx.fillText(name.trim(),120,95);
+  if(p.school){ctx.font='11px Arial';ctx.fillStyle='#8B7EC8';ctx.fillText(p.school,120,115)}
+  ctx.font='bold 10px Arial';ctx.fillStyle='rgba(245,200,66,0.6)';ctx.textAlign='right';ctx.fillText('EduCoach ⚔️',270,148);
+}
+async function shareBadgeNative(){
+  const canvas=document.getElementById('badge-canvas');
+  canvas.toBlob(async(blob)=>{
+    const file=new File([blob],'badge-educoach.png',{type:'image/png'});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({title:`Badge "${currentBadgeData?.name}" sur EduCoach !`,files:[file],url:'https://educoach-poc.vercel.app'})}catch(e){copyBadgeLink()}
+    } else copyBadgeLink();
+  });
+}
+function copyBadgeLink(){
+  const p=loadProfileData();const name=p.firstname||state.studentName||'Un élève';
+  const text=`🏆 ${name} vient de débloquer "${currentBadgeData?.name}" sur EduCoach !\n⚔️ Je prépare mon brevet de maths avec Elio\n👉 https://educoach-poc.vercel.app`;
+  navigator.clipboard.writeText(text).then(()=>alert('Texte copié ! 📋')).catch(()=>prompt('Copie ce texte :',text));
+}
+
+// OBJECTIVES
+const THEME_BADGES=[
+  {theme:'calcul',emoji:'🔢',name:'Calcul',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--green)'},
+  {theme:'alg',emoji:'🔤',name:'Algèbre',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--blue)'},
+  {theme:'geo',emoji:'📐',name:'Géométrie',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--purple)'},
+  {theme:'fonc',emoji:'📈',name:'Fonctions',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--amber)'},
+  {theme:'stat',emoji:'📊',name:'Stats',badges:['🥉 Soldat','🥈 Chevalier','🥇 Maître'],targets:[40,70,90],color:'var(--teal)'},
+];
+function buildObjectives(){
+  const section=document.getElementById('objectives-section');
+  if(!section)return;
+  section.innerHTML=THEME_BADGES.map(t=>{
+    const score=state.scores[t.theme]||0;
+    const nextTarget=t.targets.find(tg=>score<tg)||t.targets[t.targets.length-1];
+    const pct=Math.min(100,Math.round((score/nextTarget)*100));
+    const lvl=score>=t.targets[2]?2:score>=t.targets[1]?1:score>=t.targets[0]?0:-1;
+    const currentBadge=lvl>=0?t.badges[lvl]+' du '+t.name:null;
+    const nextBadge=t.badges[Math.min(lvl+1,2)]+' du '+t.name;
+    return `<div class="objective-row${lvl===2?' objective-unlocked':''}">
+      <div class="objective-header">
+        <div class="objective-left">
+          <span class="objective-emoji">${t.emoji}</span>
+          <div><div class="objective-name">${t.name}</div><div class="objective-badge-name">${currentBadge?'✅ '+currentBadge:'Prochain : '+nextBadge}</div></div>
+        </div>
+        <div class="objective-pct">${score}%</div>
+      </div>
+      <div class="objective-bar"><div class="objective-bar-fill" style="width:${pct}%;background:${t.color}"></div></div>
+      <div class="objective-target">Objectif : ${nextTarget}%</div>
+    </div>`;
+  }).join('');
+}
+
+// VOICE TTS + STT
+let ttsEnabled=false;let sttEnabled=false;let recognition=null;
+function toggleTTS(){
+  ttsEnabled=!ttsEnabled;
+  const btn=document.getElementById('btn-tts');
+  btn.classList.toggle('active',ttsEnabled);btn.textContent=ttsEnabled?'🔊 ON':'🔊 Voix';
+  if(!ttsEnabled)window.speechSynthesis?.cancel();
+}
+function speakText(text){
+  if(!ttsEnabled||!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const clean=text.replace(/<[^>]*>/g,'').replace(/[#*🔢🔤📐📈📊⚔️🏆🎯🥚⚡💫👑💎🔥🧙🛡️⚔️🥉🥈🥇]/g,'').trim();
+  if(!clean)return;
+  const utt=new SpeechSynthesisUtterance(clean);
+  utt.lang='fr-FR';utt.rate=0.95;utt.pitch=1.1;
+  const voices=window.speechSynthesis.getVoices();
+  const fr=voices.find(v=>v.lang.startsWith('fr')&&v.name.includes('Google'))||voices.find(v=>v.lang.startsWith('fr'));
+  if(fr)utt.voice=fr;
+  window.speechSynthesis.speak(utt);
+}
+function toggleMic(){sttEnabled?stopMic():startMic()}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Reconnaissance vocale non supportée. Utilise Chrome !');return}
+  recognition=new SR();recognition.lang='fr-FR';recognition.interimResults=false;recognition.maxAlternatives=1;
+  recognition.onresult=(e)=>{document.getElementById('answer-input').value=e.results[0][0].transcript;stopMic();submitAnswer()};
+  recognition.onerror=()=>stopMic();recognition.onend=()=>{if(sttEnabled)stopMic()};
+  recognition.start();sttEnabled=true;
+  const btn=document.getElementById('btn-mic');btn.classList.add('listening');btn.textContent='🎤 Écoute...';
+}
+function stopMic(){if(recognition){recognition.stop();recognition=null}sttEnabled=false;const btn=document.getElementById('btn-mic');btn.classList.remove('listening');btn.textContent='🎤 Micro'}
+
+// PATCH showSpeech for TTS
+const _origSS=showSpeech;
+showSpeech=function(text,ex=null,cb=null){
+  _origSS(text,ex,cb);
+  if(text)speakText(text);
+  if(ex?.question)speakText(ex.question);
+};
+
+// PATCH updateHomeScreen for objectives + profile emoji
+const _origUH=updateHomeScreen;
+updateHomeScreen=function(){
+  _origUH();
+  const p=loadProfileData();
+  const el=document.getElementById('home-user-emoji');
+  if(el)el.textContent=p.emoji||'🧑';
+  buildObjectives();
+};
+
+// PATCH buildBadges clickable
+const _origBB=buildBadges;
+buildBadges=function(){
+  const grid=document.getElementById('badges-grid');
+  grid.innerHTML=BADGES.map(b=>{
+    const earned=b.condition(state);
+    return `<div class="badge-card${earned?' earned':' locked'}" style="cursor:pointer" onclick='openBadgeModal({emoji:"${b.emoji}",name:"${b.name}",earned:${earned}})'>
+      <div class="badge-emoji">${b.emoji}</div>
+      <div class="badge-name">${b.name}</div>
+      ${earned?'<div style="font-size:9px;color:var(--gold);margin-top:2px">Partager</div>':''}
+    </div>`;
+  }).join('');
+};
+
+// Check theme badge unlock after score update
+function checkThemeBadgeUnlock(){
+  THEME_BADGES.forEach(t=>{
+    const score=state.scores[t.theme]||0;
+    const key='badge_unlocked_'+t.theme;
+    const prev=parseInt(localStorage.getItem(key)||'0');
+    const newLvl=score>=t.targets[2]?3:score>=t.targets[1]?2:score>=t.targets[0]?1:0;
+    if(newLvl>prev){
+      localStorage.setItem(key,newLvl);
+      const bname=t.badges[newLvl-1]+' du '+t.name;
+      setTimeout(()=>{openBadgeModal({emoji:t.emoji,name:bname,earned:true});speakText('Félicitations ! Tu as débloqué '+bname);},800);
+    }
+  });
+}
+const _origUTS=updateTopicScore;
+updateTopicScore=function(topic,correct){_origUTS(topic,correct);checkThemeBadgeUnlock()};
+
+// Profile save on setup
+const _origFS=finishSetup;
+finishSetup=function(){
+  const p=loadProfileData();
+  if(!p.firstname&&state.studentName){p.firstname=state.studentName;localStorage.setItem('educoach_profile',JSON.stringify(p))}
+  _origFS();
+};
+
+</script>
+
+<!-- PROFILE OVERLAY -->
+<div class="profile-overlay" id="profile-overlay">
+  <div class="profile-header">
+    <div class="profile-title">⚔️ Mon Profil</div>
+    <button class="btn-close-profile" onclick="closeProfile()">✕ Fermer</button>
+  </div>
+
+  <div class="profile-avatar-section">
+    <span class="profile-emoji-display" id="profile-emoji-display" onclick="toggleEmojiPicker()">🧑</span>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Clique pour changer ton emoji</div>
+    <div class="profile-emoji-grid" id="emoji-picker">
+      🧑 👦 👧 🧒 👨 👩 🧔 👱 🦸 🧙 🧝 🧛 🦊 🐺 🦁 🐯 🦄 🐉 🔥 ⚔️ 🛡️ 🏹 💎 👑
+    </div>
+  </div>
+
+  <div class="profile-field">
+    <label>Prénom</label>
+    <input type="text" class="profile-input" id="profile-firstname" placeholder="Ex: Emma"/>
+  </div>
+  <div class="profile-field">
+    <label>Nom</label>
+    <input type="text" class="profile-input" id="profile-lastname" placeholder="Ex: Dupont"/>
+  </div>
+  <div class="profile-field">
+    <label>Mon collège</label>
+    <input type="text" class="profile-input" id="profile-school" placeholder="Ex: Collège Victor Hugo"/>
+  </div>
+
+  <div class="profile-field">
+    <label>Comment tu évalues ton niveau en maths ?</label>
+    <div class="level-self-grid">
+      <div class="self-level-btn" onclick="selectSelfLevel('nul')" id="sl-nul">
+        <div class="self-level-emoji">😰</div>
+        <div class="self-level-name">Difficile</div>
+        <div class="self-level-desc">J'ai du mal</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('moyen')" id="sl-moyen">
+        <div class="self-level-emoji">😐</div>
+        <div class="self-level-name">Moyen</div>
+        <div class="self-level-desc">Ça dépend</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('bien')" id="sl-bien">
+        <div class="self-level-emoji">😊</div>
+        <div class="self-level-name">Bien</div>
+        <div class="self-level-desc">Je m'en sors</div>
+      </div>
+      <div class="self-level-btn" onclick="selectSelfLevel('expert')" id="sl-expert">
+        <div class="self-level-emoji">🔥</div>
+        <div class="self-level-name">Expert</div>
+        <div class="self-level-desc">Je cartonne</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-save-profile" onclick="saveProfile()">Sauvegarder mon profil ✓</button>
+</div>
+
+<!-- BADGE MODAL -->
+<div class="badge-modal" id="badge-modal" onclick="closeBadgeModal()">
+  <div class="badge-modal-card" onclick="event.stopPropagation()">
+    <span class="badge-modal-emoji" id="bm-emoji">🏆</span>
+    <div class="badge-modal-name" id="bm-name">Badge</div>
+    <div class="badge-modal-desc" id="bm-desc">Description du badge</div>
+    <canvas class="badge-modal-canvas" id="badge-canvas" width="280" height="160"></canvas>
+    <div class="badge-share-btns">
+      <button class="btn-share btn-share-native" onclick="shareBadgeNative()">📤 Partager</button>
+      <button class="btn-share btn-share-copy" onclick="copyBadgeLink()">🔗 Copier lien</button>
+    </div>
+    <button class="btn-close-badge" onclick="closeBadgeModal()">Fermer</button>
+  </div>
+</div>
+
+</body>
+</html>
