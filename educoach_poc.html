@@ -711,6 +711,7 @@ const state = {
   explainedThemes: {},
   trainingPlan: null,
   todayTheme: null,
+  studentId: null,
 };
 
 const LEVELS = [
@@ -1075,6 +1076,7 @@ async function startDiagnostic(){
   state.diagQuestions=[];
   state.diagIndex=0;
   state.diagScores={calcul:[],alg:[],geo:[],fonc:[],stat:[]};
+  state.sessionStart=Date.now();
   document.getElementById('progress-top').style.display='flex';
   document.getElementById('answer-input').disabled=false;
   document.getElementById('btn-send').disabled=false;
@@ -1302,7 +1304,35 @@ function nextQuestion(){
   }
 }
 
+async function logSession(exos, score){
+  const studentId=state.studentId||localStorage.getItem('educoach_student_id');
+  if(!studentId)return;
+  const durationMinutes=state.sessionStart?Math.round((Date.now()-state.sessionStart)/60000):0;
+  try{
+    await fetch(`${BACKEND}/api/session/log`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        student_id:studentId,
+        theme:state.todayTheme||'',
+        exercises_count:exos,
+        correct_count:state.sessionCorrect||0,
+        score:score,
+        duration_minutes:durationMinutes,
+        scores_snapshot:{
+          calcul:state.scores.calcul||0,
+          alg:state.scores.alg||0,
+          geo:state.scores.geo||0,
+          fonc:state.scores.fonc||0,
+          stat:state.scores.stat||0
+        }
+      })
+    });
+  }catch(e){console.log('session log error:',e)}
+}
+
 function showSessionEndScreen(exos, score, xpGained){
+  logSession(exos, score);
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
   document.getElementById('progress-top').style.display='none';
@@ -1471,6 +1501,7 @@ function loadProgress(){
     const d=JSON.parse(saved);
     Object.assign(state,d);
   }
+  state.studentId=localStorage.getItem('educoach_student_id');
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
