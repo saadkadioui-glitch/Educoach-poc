@@ -1,6 +1,5 @@
-json{
+﻿{
   "version": 2,
-  "routes": [
-    {"src": "/(.*)", "dest": "/index.html"}
-  ]
+  "builds": [{"src": "index.html", "use": "@vercel/static"}],
+  "routes": [{"src": "/(.*)", "dest": "/index.html"}]
 }
