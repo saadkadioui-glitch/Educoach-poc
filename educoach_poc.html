@@ -1144,7 +1144,7 @@ Sois souple sur les équivalents.`;
       showFeedback(false,'Pas tout à fait ❌',result.comment+' La réponse était : '+q.expected);
     }
   }catch(e){
-    askDiagQuestion(state.diagIndex+1);
+    showFeedback(false,'Erreur technique 😅','On passe à la question suivante.');
   }
 }
 
@@ -1213,7 +1213,7 @@ Max 150 mots. Ton naturel.`;
     try{
       const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,500);
       state.phase='explanation';
-      showSpeech(resp);
+      showSpeech(resp, null, ()=>{state.phase='training';generateExercise();});
       return;
     }catch(e){}
   }
@@ -1266,7 +1266,7 @@ Réponds UNIQUEMENT avec ce JSON :
   }catch(e){
     state.sessionExos++;
     state.totalExos++;
-    showFeedback(true,'Continue !','');
+    showFeedback(false,'Petit bug technique 😅','On passe à la suite !');
   }
 }
 
@@ -1371,6 +1371,11 @@ async function submitAnswer(){
   const input=document.getElementById('answer-input');
   const answer=input.value.trim();
   if(!answer)return;
+  if(state.phase==='idle'){
+    input.value='';
+    showSpeech('Lance le diagnostic ou l\'entraînement pour commencer ! ⚔️');
+    return;
+  }
   input.value='';
   document.getElementById('btn-send').disabled=true;
   if(state.phase==='diagnostic'){
@@ -1654,7 +1659,7 @@ function startMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('Reconnaissance vocale non supportée. Utilise Chrome !');return}
   recognition=new SR();recognition.lang='fr-FR';recognition.interimResults=false;recognition.maxAlternatives=1;
-  recognition.onresult=(e)=>{document.getElementById('answer-input').value=e.results[0][0].transcript;stopMic();submitAnswer()};
+  recognition.onresult=(e)=>{document.getElementById('answer-input').value=e.results[0][0].transcript;stopMic();};
   recognition.onerror=()=>stopMic();recognition.onend=()=>{if(sttEnabled)stopMic()};
   recognition.start();sttEnabled=true;
   const btn=document.getElementById('btn-mic');btn.classList.add('listening');btn.textContent='🎤 Écoute...';
