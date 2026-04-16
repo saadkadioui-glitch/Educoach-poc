@@ -753,6 +753,7 @@ const state = {
   trainingPlan: null,
   todayTheme: null,
   studentId: null,
+  currentUserId: null,
 };
 
 const LEVELS = [
@@ -812,19 +813,19 @@ async function loginGoogle(){
   await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});
 }
 
-sb.auth.onAuthStateChange((event,session)=>{
+sb.auth.onAuthStateChange(async(event,session)=>{
   if(session?.user){
     const name=session.user.user_metadata?.full_name||session.user.email.split('@')[0];
     state.studentName=name;
+    state.currentUserId=session.user.id;
     document.getElementById('auth-screen').style.display='none';
-    loadProgress();
     const saved=localStorage.getItem('educoach_level');
     if(!saved){
       document.getElementById('setup-screen').classList.add('show');
     } else {
       state.studentLevel=saved;
       state.checkedChapters=new Set(JSON.parse(localStorage.getItem('educoach_chapters')||'[]'));
-      loadProgress();
+      await loadProgress();
       showApp();
     }
   }
@@ -1533,21 +1534,59 @@ function addXP(amount){
   saveProgress();
 }
 
-function saveProgress(){
+function _statePayload(){
+  return {
+    xp:state.xp,sessions:state.sessions,total_exos:state.totalExos,
+    streak:state.streak,last_session_date:state.lastSessionDate||null,
+    scores:state.scores,diag_done:state.diagDone,
+    training_plan:state.trainingPlan||null,today_theme:state.todayTheme||null,
+    explained_themes:state.explainedThemes||{},student_id:state.studentId||null
+  };
+}
+async function saveProgress(){
+  const payload=_statePayload();
+  // Always write localStorage as immediate fallback
   localStorage.setItem('educoach_progress',JSON.stringify({
     xp:state.xp,sessions:state.sessions,totalExos:state.totalExos,
     streak:state.streak,scores:state.scores,diagDone:state.diagDone,
     trainingPlan:state.trainingPlan,todayTheme:state.todayTheme
   }));
+  const userId=state.currentUserId;
+  if(!userId)return;
+  try{
+    await fetch(`${BACKEND}/api/state/${userId}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+  }catch(e){console.log('saveProgress error:',e)}
 }
 
-function loadProgress(){
+async function loadProgress(){
+  // First load from localStorage for instant display
   const saved=localStorage.getItem('educoach_progress');
-  if(saved){
-    const d=JSON.parse(saved);
-    Object.assign(state,d);
-  }
+  if(saved){try{Object.assign(state,JSON.parse(saved));}catch(e){}}
   state.studentId=localStorage.getItem('educoach_student_id');
+  // Then override with server data if user is logged in
+  const userId=state.currentUserId;
+  if(!userId)return;
+  try{
+    const r=await fetch(`${BACKEND}/api/state/${userId}`);
+    if(r.ok){
+      const d=await r.json();
+      if(d&&d.xp!==undefined){
+        state.xp=d.xp||0;
+        state.sessions=d.sessions||0;
+        state.totalExos=d.total_exos||0;
+        state.streak=d.streak||0;
+        state.scores=d.scores||state.scores;
+        state.diagDone=d.diag_done||false;
+        state.trainingPlan=d.training_plan||null;
+        state.todayTheme=d.today_theme||null;
+        state.explainedThemes=d.explained_themes||{};
+        if(d.student_id){state.studentId=d.student_id;localStorage.setItem('educoach_student_id',d.student_id);}
+      }
+    }
+  }catch(e){console.log('loadProgress error:',e)}
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
