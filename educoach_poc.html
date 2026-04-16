@@ -1108,7 +1108,30 @@ async function callAPI(messages, system, maxTokens=1000){
   return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
 }
 
-const ELIO_SYSTEM=`Tu es Elio, un chevalier-coach bienveillant dans un univers médiéval fantastique. Tu aides les élèves de collège à préparer le brevet de maths. Ton ton : naturel, direct, motivant. Comme un grand frère qui s'y connaît. Réponses courtes (max 100 mots). Jamais de jargon de prof.`;
+const ELIO_SYSTEM=`Tu es Elio, coach maths bienveillant qui prépare des élèves de 3e au brevet (DNB).
+TON : naturel, direct, motivant — grand frère qui s'y connaît. Jamais de jargon de prof. Tutoiement toujours.
+
+BREVET — ce qui compte :
+• Calcul numérique : fractions, puissances, racines carrées, priorités, pourcentages, proportionnalité
+• Algèbre : équations du 1er/2e degré, inéquations, développement/factorisation, suites
+• Géométrie : Pythagore, Thalès, trigonométrie, transformations, aires, volumes
+• Fonctions : tableau de valeurs, représentation graphique, lecture, fonctions affines/linéaires
+• Stats & Proba : moyenne, médiane, étendue, fréquences, probabilités simples/composées
+
+ÉQUIVALENCES MATHÉMATIQUES — toutes ces formes sont correctes pour la même valeur :
+• 1/2 = 0,5 = 50% = 0.5 (virgule ou point)
+• √2 ≈ 1,41 (arrondi à 2 décimales acceptable)
+• 3x+6 = 3(x+2) (forme développée = forme factorisée)
+• Résultat exact préféré à valeur approchée sauf si demandé
+
+TYPES D'ERREURS — quand un élève se trompe, identifie laquelle :
+• CALCUL : bonne méthode, erreur arithmétique (ex: 3×8=22 au lieu de 24)
+• MÉTHODE : mauvaise approche du problème (ex: additionne au lieu de multiplier)
+• CONCEPT : incompréhension de la notion (ex: confond périmètre et aire)
+• LECTURE : n'a pas bien lu l'énoncé
+
+Réponses max 120 mots sauf quand format JSON demandé.`;
+
 
 // ============================================
 // DIAGNOSTIC
@@ -1124,12 +1147,24 @@ async function startDiagnostic(){
   document.getElementById('btn-send').disabled=false;
 
   const checkedList=[...state.checkedChapters].join(', ');
-  const diagPrompt=`Tu es Elio. Crée un diagnostic pour un élève de ${state.studentLevel||'3e'}.
-Chapitres étudiés : ${checkedList}
-Génère exactement 20 questions UNIQUEMENT sur ces chapitres (4 par thème si possible, sinon adapte).
-Réponds UNIQUEMENT avec ce JSON :
-{"questions":[{"id":1,"theme":"calcul","topic":"fractions","question":"énoncé","expected":"réponse exacte","difficulty":2},...]}
-Thèmes possibles : calcul, alg, geo, fonc, stat. difficulty 1-3. expected = réponse courte.`;
+  const diagPrompt=`Crée un diagnostic brevet pour un élève de ${state.studentLevel||'3e'}.
+Chapitres étudiés : ${checkedList||'programme complet de 3e'}
+
+Génère exactement 20 questions (4 par thème : calcul, alg, geo, fonc, stat).
+Formats brevet authentiques :
+- calcul : "Calcule 3/4 + 2/3", "Donne la forme irréductible de 18/24"
+- alg : "Résous 2x+5=13", "Développe (x+3)(x-2)"
+- geo : "ABC rectangle en A, AB=6, AC=8. Calcule BC.", "Calcule l'aire d'un disque de rayon 5 cm"
+- fonc : "f(x)=2x-3. Calcule f(4)", "Quelle est l'ordonnée à l'origine de y=3x+7 ?"
+- stat : "Calcule la moyenne de : 12, 15, 8, 20, 10", "Un sac contient 3 rouges et 7 bleues. P(rouge)=?"
+
+Règles :
+- difficulty 1=facile (calcul direct), 2=moyen (1-2 étapes), 3=difficile (raisonnement)
+- 2 questions difficulty 1, 1 difficulty 2, 1 difficulty 3 par thème
+- expected = réponse exacte courte (ex: "5/6", "7", "10 cm", "3/10")
+
+Réponds UNIQUEMENT avec ce JSON sans texte avant/après :
+{"questions":[{"id":1,"theme":"calcul","topic":"fractions","question":"énoncé complet","expected":"réponse exacte","difficulty":2}]}`;
 
   showTypingBubble();
   showSpeech('');
@@ -1163,12 +1198,16 @@ function askDiagQuestion(i){
 async function processDiagAnswer(answer){
   const q=state.diagQuestions[state.diagIndex];
   showTypingBubble();
-  const evalPrompt=`Évalue cette réponse brevet.
+  const evalPrompt=`Évalue cette réponse brevet de maths.
 Question: ${q.question}
 Réponse attendue: ${q.expected}
 Réponse élève: ${answer}
-Réponds UNIQUEMENT avec ce JSON: {"correct":true/false,"partial":0.0-1.0,"comment":"feedback max 15 mots"}
-Sois souple sur les équivalents.`;
+
+Règles d'équivalence : 1/2=0.5=0,5=50%, formes développée et factorisée équivalentes, arrondi à ±0,01 acceptable.
+Si la réponse est vide ou "je sais pas" → correct:false, partial:0.
+
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"partial":0.0,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","comment":"max 15 mots : ce qui était juste ou pourquoi c'est faux"}`;
   try{
     const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,200);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
@@ -1246,12 +1285,14 @@ async function generateExercise(){
   // Explain if needed
   if(firstScore<50&&!state.explainedThemes[firstTheme]){
     state.explainedThemes[firstTheme]=true;
-    const explainPrompt=`Tu es Elio. Le thème "${themeNames[firstTheme]}" est à ${firstScore}% — point faible.
-Mini-leçon en 3 parties :
-📖 Concept (2-3 lignes)
-✏️ Exemple résolu
-❓ Question de contrôle
-Max 150 mots. Ton naturel.`;
+    const explainPrompt=`Le thème "${themeNames[firstTheme]}" est à ${firstScore}% — c'est le point faible.
+Fais une mini-leçon structurée en 3 parties EXACTEMENT :
+
+📖 LA RÈGLE (2-3 lignes max) : explique le concept clé avec tes mots, pas de jargon
+✏️ EXEMPLE BREVET RÉSOLU : montre un exercice typique avec la solution étape par étape
+💡 ASTUCE BREVET : une erreur fréquente à éviter ou un raccourci à retenir
+
+Max 160 mots. Termine par "C'est bon ? On s'entraîne maintenant !" pour inviter à continuer.`;
     try{
       const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,500);
       state.phase='explanation';
@@ -1260,12 +1301,23 @@ Max 150 mots. Ton naturel.`;
     }catch(e){}
   }
 
-  const exPrompt=`Tu es Elio. Génère UN exercice de maths brevet adapté.
-Points faibles : ${weak.map(k=>themeNames[k]).join(', ')}
-Chapitres étudiés : ${[...state.checkedChapters].join(', ')}
-Niveau : ${state.studentLevel||'3e'}
+  const weakScores=weak.map(k=>`${themeNames[k]} (${scores[k]||0}%)`).join(', ');
+  const difficulty=firstScore<30?1:firstScore<60?2:3;
+  const exPrompt=`Génère UN exercice brevet de maths.
+Points faibles à travailler : ${weakScores}
+Chapitres étudiés : ${[...state.checkedChapters].join(', ')||'programme 3e'}
+Niveau cible : difficulté ${difficulty}/3 (${difficulty===1?'calcul direct':'raisonnement en '+(difficulty===2?'2':'3+')+' étapes'})
+
+Style brevet authentique — énoncé clair et précis, réponse unique.
+Exemples par thème :
+- calcul: "Calcule 2³ × (1/4 + 3/4). Donne le résultat sous forme d'entier."
+- alg: "Résous l'équation 3(x-2) = x+8"
+- geo: "ABCD est un rectangle. AB=9cm, BC=12cm. Calcule la longueur AC."
+- fonc: "g est la fonction affine telle que g(0)=5 et g(2)=11. Donne l'expression de g(x)."
+- stat: "Dans une classe de 30 élèves, 18 ont eu plus de 10/20. Quelle est la fréquence en % ?"
+
 Réponds UNIQUEMENT avec ce JSON :
-{"type":"exercice","topic":"nom","difficulty":1-5,"question":"énoncé","expected":"réponse exacte","hint":"indice"}`;
+{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`;
   try{
     const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,400);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
@@ -1283,12 +1335,16 @@ Réponds UNIQUEMENT avec ce JSON :
 async function processTrainingAnswer(answer){
   if(!state.currentExercise)return;
   showTypingBubble();
-  const evalPrompt=`Tu es Elio. Évalue la réponse.
+  const evalPrompt=`Évalue cette réponse brevet de maths.
 Question: ${state.currentExercise.question}
 Réponse attendue: ${state.currentExercise.expected}
 Réponse élève: ${answer}
+
+Règles d'équivalence : 1/2=0.5=0,5=50%, formes développée/factorisée équivalentes, arrondi ±0,01 acceptable.
+Si vide ou "je sais pas" → correct:false.
+
 Réponds UNIQUEMENT avec ce JSON :
-{"correct":true/false,"feedback":"explication max 60 mots","encouragement":"phrase courte"}`;
+{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"si faux: explique l'erreur + méthode correcte en 1-2 phrases","encouragement":"1 phrase motivante adaptée au résultat"}`;
   try{
     const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,300);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
@@ -1304,7 +1360,9 @@ Réponds UNIQUEMENT avec ce JSON :
     }
     state.sessionExos++;
     state.totalExos++;
-    showFeedback(result.correct,result.correct?'Bonne réponse ! ✅':'Pas tout à fait ❌',result.feedback+' '+result.encouragement);
+    const errLabel={'CALCUL':'Erreur de calcul 🔢','MÉTHODE':'Mauvaise méthode 📐','CONCEPT':'Notion à revoir 📚','LECTURE':'Erreur de lecture 👀'};
+    const wrongTitle=result.error_type&&errLabel[result.error_type]?errLabel[result.error_type]:'Pas tout à fait ❌';
+    showFeedback(result.correct,result.correct?'Bonne réponse ! ✅':wrongTitle,(result.feedback||'')+' '+(result.encouragement||''));
   }catch(e){
     state.sessionExos++;
     state.totalExos++;
