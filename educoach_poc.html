@@ -196,6 +196,12 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .btn-send:hover{background:var(--gold-dark)}
 .btn-send:disabled{opacity:0.4;cursor:not-allowed}
 
+/* QCM */
+.qcm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 16px}
+.qcm-btn{background:rgba(255,255,255,0.08);border:2px solid rgba(245,200,66,0.3);border-radius:14px;padding:12px 10px;color:white;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;line-height:1.4;transition:all 0.2s}
+.qcm-btn:hover{background:rgba(245,200,66,0.15);border-color:var(--gold);transform:translateY(-1px)}
+.qcm-btn .qcm-letter{display:inline-block;background:var(--gold);color:#0F0A1E;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;margin-right:6px}
+
 /* FEEDBACK OVERLAY */
 .feedback-overlay{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;display:none}
 .feedback-overlay.show{display:flex}
@@ -611,6 +617,9 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
           <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
         </div>
       </div>
+
+      <!-- QCM area -->
+      <div class="qcm-grid" id="qcm-area" style="display:none"></div>
 
       <!-- Feedback overlay -->
       <div class="feedback-overlay" id="feedback-overlay">
@@ -1055,12 +1064,16 @@ function showSpeech(text, showExercise=null, continueCallback=null){
     document.getElementById('ex-stars').innerHTML=stars;
     continueEl.style.display='none';
     state.pendingContinue=null;
-    // Always enable input when exercise is shown
-    setTimeout(()=>{
-      document.getElementById('answer-input').disabled=false;
-      document.getElementById('btn-send').disabled=false;
-      document.getElementById('answer-input').focus();
-    },100);
+    if(showExercise.choices&&showExercise.choices.length){
+      showQCM(showExercise.choices);
+    } else {
+      hideQCM();
+      setTimeout(()=>{
+        document.getElementById('answer-input').disabled=false;
+        document.getElementById('btn-send').disabled=false;
+        document.getElementById('answer-input').focus();
+      },100);
+    }
   } else if(continueCallback){
     continueEl.style.display='flex';
     document.getElementById('answer-input').disabled=true;
@@ -1107,6 +1120,126 @@ async function callAPI(messages, system, maxTokens=1000){
   const d=await r.json();
   return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
 }
+
+// ============================================
+// FICHES DB — corpus statique validé
+// ============================================
+const FICHES_DB = {
+  "fractions": {
+    resume: "Une fraction a/b représente a parties d'un tout divisé en b parts égales. Pour additionner deux fractions, on les met au même dénominateur. Pour multiplier, on multiplie numérateur × numérateur et dénominateur × dénominateur.",
+    formules: ["a/b + c/d = (ad + bc) / bd", "a/b × c/d = (a×c) / (b×d)", "a/b ÷ c/d = a/b × d/c", "Fraction irréductible : diviser par le PGCD"],
+    exemple: "Calcule 2/3 + 3/4\n→ Dénominateur commun = 12\n→ 2/3 = 8/12 et 3/4 = 9/12\n→ 8/12 + 9/12 = 17/12",
+    tips: ["Toujours simplifier la fraction finale", "Pour comparer deux fractions, les mettre au même dénominateur", "a/b × b = a (le b se simplifie)"],
+    erreurs: ["Additionner les dénominateurs : 1/2 + 1/3 ≠ 2/5 !", "Oublier de simplifier la réponse finale", "Confondre division et multiplication de fractions"]
+  },
+  "puissances": {
+    resume: "aⁿ = a × a × ... × a (n fois). Les règles de calcul permettent de simplifier les expressions avec puissances. En notation scientifique, tout nombre s'écrit a × 10ⁿ avec 1 ≤ a < 10.",
+    formules: ["aⁿ × aᵐ = aⁿ⁺ᵐ", "aⁿ ÷ aᵐ = aⁿ⁻ᵐ", "(aⁿ)ᵐ = aⁿˣᵐ", "a⁰ = 1 (a ≠ 0)", "a⁻ⁿ = 1/aⁿ"],
+    exemple: "Simplifie 3⁴ × 3⁻²\n→ 3⁴⁺⁽⁻²⁾ = 3² = 9\n\nNotation scientifique : 0,00045 = 4,5 × 10⁻⁴",
+    tips: ["10³ = 1000, 10⁶ = 1 million — mémorise les grandes puissances de 10", "Puissance négative = fraction (2⁻³ = 1/8)", "Pour comparer en notation scientifique, compare d'abord les exposants"],
+    erreurs: ["3² × 3³ ≠ 9⁵ — on additionne les exposants, pas les bases", "(2+3)² ≠ 2² + 3² — on ne distribue pas une puissance", "2⁻¹ ≠ -2 — c'est 1/2"]
+  },
+  "priorites": {
+    resume: "L'ordre des opérations est : 1) Parenthèses 2) Puissances et racines 3) × et ÷ 4) + et −. Sans parenthèses, on commence toujours par les multiplications.",
+    formules: ["Ordre : Parenthèses → Puissances → × / → + −", "a × (b + c) = ab + ac (distributivité)", "-(a + b) = -a - b (attention aux signes !)"],
+    exemple: "Calcule 3 + 4 × 2 − (5 − 1)²\n→ Parenthèses : (5−1) = 4\n→ Puissance : 4² = 16\n→ Multiplication : 4 × 2 = 8\n→ Résultat : 3 + 8 − 16 = −5",
+    tips: ["Écris chaque étape sur une ligne séparée", "Entoure toujours les parenthèses en premier", "Un signe − devant une parenthèse inverse tous les signes intérieurs"],
+    erreurs: ["Calculer de gauche à droite sans respecter les priorités", "Oublier de changer les signes après −( )", "2 × 3² ≠ 6² — la puissance s'applique uniquement au 3"]
+  },
+  "pourcentages": {
+    resume: "Un pourcentage est une proportion sur 100. Prendre p% de A = A × p/100. Une augmentation de p% donne × (1 + p/100). Une réduction de p% donne × (1 − p/100).",
+    formules: ["p% de A = A × p/100", "Augmentation p% : × (1 + p/100)", "Réduction p% : × (1 − p/100)", "Taux d'évolution = (Vf − Vi)/Vi × 100"],
+    exemple: "Article à 80€, soldes −25%.\n→ Prix soldé = 80 × 0,75 = 60€\n\nTaux d'évolution de 50 à 65 :\n→ (65−50)/50 × 100 = 30%",
+    tips: ["Coefficient multiplicateur : +20% → ×1,2 ; −20% → ×0,8", "Pour retrouver le prix d'origine après −20% : diviser par 0,8", "Deux réductions successives ne s'additionnent pas"],
+    erreurs: ["−20% puis +20% ≠ prix initial (c'est ×0,8×1,2 = ×0,96)", "Confondre prix soldé et montant de la réduction", "Calculer le pourcentage sur la mauvaise valeur"]
+  },
+  "equations": {
+    resume: "Résoudre une équation c'est trouver la valeur de x qui vérifie l'égalité. On effectue les mêmes opérations des deux côtés du signe = pour isoler x.",
+    formules: ["ax + b = 0 → x = −b/a", "ax + b = cx + d → x = (d−b)/(a−c)", "Vérification : substitue la valeur dans l'équation"],
+    exemple: "Résous 3x − 7 = x + 5\n→ 3x − x = 5 + 7\n→ 2x = 12\n→ x = 6\n\nVérif : 3(6)−7 = 11 = 6+5 ✓",
+    tips: ["Passe les x d'un côté, les nombres de l'autre", "Un terme qui change de côté change de signe", "Toujours vérifier en substituant la valeur trouvée"],
+    erreurs: ["Changer le signe = en déplaçant un terme (= ne change jamais!)", "Diviser par a sans vérifier a ≠ 0", "Oublier la vérification finale"]
+  },
+  "developpement": {
+    resume: "Développer = enlever les parenthèses. Factoriser = mettre en facteur commun. Ces deux opérations sont inverses l'une de l'autre.",
+    formules: ["k(a+b) = ka + kb", "(a+b)(c+d) = ac + ad + bc + bd", "(a+b)² = a² + 2ab + b²", "(a−b)² = a² − 2ab + b²", "(a+b)(a−b) = a² − b²"],
+    exemple: "Développe (x+3)(x−2)\n→ x²−2x+3x−6 = x²+x−6\n\nFactorise x²−9\n→ (x+3)(x−3) [identité remarquable a²−b²]",
+    tips: ["Reconnais les identités remarquables à l'examen", "(a+b)² ≠ a²+b² — n'oublie pas le 2ab!", "Cherche d'abord un facteur commun avant de factoriser"],
+    erreurs: ["(x+3)² = x²+9 au lieu de x²+6x+9", "−(x+3) = −x+3 au lieu de −x−3", "Développer quand on te demande de factoriser"]
+  },
+  "pythagore": {
+    resume: "Dans un triangle rectangle, le carré de l'hypoténuse = somme des carrés des deux autres côtés. L'hypoténuse est toujours le côté opposé à l'angle droit (le plus long).",
+    formules: ["BC² = AB² + AC² (angle droit en A)", "Réciproque : BC²=AB²+AC² ⟹ angle droit en A", "AB = √(BC² − AC²)"],
+    exemple: "ABC rectangle en A, AB=6, AC=8. Calcule BC.\n→ BC² = 6² + 8² = 36 + 64 = 100\n→ BC = √100 = 10 cm\n\nTriplets : 3−4−5, 5−12−13, 6−8−10",
+    tips: ["L'hypoténuse est TOUJOURS en face de l'angle droit", "Mémorise le triplet 3−4−5 et ses multiples", "Pour la réciproque : calcule le carré du plus grand côté en premier"],
+    erreurs: ["Prendre un côté quelconque comme hypoténuse", "Oublier la racine carrée : BC² = 100 donc BC = 10 pas 100", "Appliquer Pythagore sans angle droit"]
+  },
+  "thales": {
+    resume: "Si deux droites sont coupées par deux sécantes parallèles, les rapports des longueurs correspondantes sont égaux. Sert à calculer une longueur inconnue par proportionnalité.",
+    formules: ["AD/AB = AE/AC = DE/BC (si DE // BC)", "Réciproque : AD/AB = AE/AC ⟹ DE // BC"],
+    exemple: "DE // BC, AD=4, AB=10, AE=3. Calcule AC.\n→ AD/AB = AE/AC\n→ 4/10 = 3/AC\n→ AC = 3×10/4 = 7,5 cm",
+    tips: ["Toujours partir du même sommet pour écrire les rapports", "Écris les rapports dans le même sens : entier/entier ou partie/entier", "Fais un schéma si tu n'en as pas"],
+    erreurs: ["Mélanger les segments dans les rapports", "Confondre Thalès (parallèles) et Pythagore (angle droit)", "Oublier de vérifier la configuration avant d'appliquer"]
+  },
+  "trigonometrie": {
+    resume: "Dans un triangle rectangle, sin/cos/tan sont des rapports entre côtés. Mémo : SOH-CAH-TOA. Sin = Opposé/Hyp, Cos = Adjacent/Hyp, Tan = Opposé/Adjacent.",
+    formules: ["sin(α) = opp/hyp", "cos(α) = adj/hyp", "tan(α) = opp/adj = sin/cos", "sin²(α) + cos²(α) = 1"],
+    exemple: "ABC rect. en A, BC=10, angle B=35°. Calcule AC.\n→ AC opposé à B, BC = hyp\n→ sin(35°) = AC/10\n→ AC = 10 × sin(35°) ≈ 5,74 cm",
+    tips: ["Écris SOH-CAH-TOA en haut de ta copie", "Identifie d'abord l'angle, puis les 3 côtés", "Calculatrice en DEGRÉS (pas radians!)"],
+    erreurs: ["Appliquer trig sans identifier l'angle droit d'abord", "Confondre côté opposé et adjacent", "Oublier de mettre la calculatrice en degrés"]
+  },
+  "fonctions affines": {
+    resume: "f(x) = ax + b. 'a' est le coefficient directeur (pente) et 'b' l'ordonnée à l'origine. Si b=0 : fonction linéaire (droite par O). a>0 : croissante, a<0 : décroissante.",
+    formules: ["f(x) = ax + b", "a = (yB − yA)/(xB − xA)", "b = f(0) (ordonnée à l'origine)"],
+    exemple: "Droite par A(1,3) et B(3,7).\na = (7−3)/(3−1) = 4/2 = 2\nf(x) = 2x + b ; f(1)=3 → 2+b=3 → b=1\n→ f(x) = 2x + 1",
+    tips: ["L'ordonnée à l'origine = où la droite coupe l'axe y (x=0)", "Pour tracer : calcule 2 points et relie", "a = combien monte-t-on quand x augmente de 1"],
+    erreurs: ["Inverser a et b", "Calculer a = yA/xA au lieu d'un rapport de différences", "Confondre fonction affine (ax+b) et quadratique (ax²+bx+c)"]
+  },
+  "statistiques": {
+    resume: "La moyenne est la valeur 'équilibre'. La médiane partage en deux moitiés égales après tri. L'étendue mesure la dispersion. Le mode est la valeur la plus fréquente.",
+    formules: ["Moyenne = Σvaleurs / n", "Étendue = max − min", "Médiane : valeur du milieu après tri (ou moyenne des deux du milieu si n pair)"],
+    exemple: "Série : 8, 12, 5, 15, 10, 8, 14\nTriée : 5, 8, 8, 10, 12, 14, 15\nMoyenne = 72/7 ≈ 10,3\nMédiane = 10 (4ème/7)\nÉtendue = 15−5 = 10",
+    tips: ["Trier la série AVANT de chercher la médiane", "Moyenne pondérée : multiplier valeur × effectif", "Médiane ≠ moyenne (une valeur extrême déplace la moyenne)"],
+    erreurs: ["Ne pas trier avant de trouver la médiane", "Diviser par le nombre de valeurs distinctes au lieu de l'effectif total", "Si n pair : oublier de faire la moyenne des deux valeurs centrales"]
+  },
+  "probabilites": {
+    resume: "P(A) = nombre de cas favorables / nombre de cas totaux (équiprobabilité). P est entre 0 et 1. P=0 : impossible, P=1 : certain. L'événement contraire Ā vérifie P(A)+P(Ā)=1.",
+    formules: ["P(A) = cas favorables / cas totaux", "P(Ā) = 1 − P(A)", "P(A ou B) = P(A) + P(B) si incompatibles", "Arbre : multiplier les branches, additionner les chemins"],
+    exemple: "Sac : 3 rouges, 5 bleues, 2 vertes.\nP(rouge) = 3/10\nP(pas rouge) = 1 − 3/10 = 7/10\nP(rouge ou verte) = 5/10 = 1/2",
+    tips: ["Utilise P(Ā)=1−P(A) pour simplifier les calculs", "Arbre de proba : ×  sur les branches, + entre les chemins", "Avec remplacement : mêmes proba à chaque tirage"],
+    erreurs: ["Oublier P(A)+P(Ā)=1", "Confondre 'au moins un' et 'exactement un'", "Ne pas distinguer tirage avec et sans remise"]
+  }
+};
+
+function findFiche(chapterName){
+  if(!chapterName)return null;
+  const name=chapterName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const kwMap={
+    'fraction':'fractions','pgcd':'fractions',
+    'puissance':'puissances','exposant':'puissances','notation scientifique':'puissances',
+    'priorite':'priorites','ordre':'priorites',
+    'pourcent':'pourcentages','proportion':'pourcentages','taux':'pourcentages',
+    'equation':'equations','inconnue':'equations',
+    'developp':'developpement','factoris':'developpement','identite':'developpement',
+    'pythagore':'pythagore','hypotenuse':'pythagore','rectangle':'pythagore',
+    'thales':'thales','parallele':'thales',
+    'trigo':'trigonometrie','sinus':'trigonometrie','cosinus':'trigonometrie','tangente':'trigonometrie',
+    'affine':'fonctions affines','lineaire':'fonctions affines','coefficient':'fonctions affines',
+    'graphique':'lecture graphique','courbe':'lecture graphique','image':'lecture graphique','antecedent':'lecture graphique',
+    'statist':'statistiques','moyenne':'statistiques','mediane':'statistiques','etendue':'statistiques',
+    'probab':'probabilites','hasard':'probabilites','evenement':'probabilites'
+  };
+  for(const [kw,key] of Object.entries(kwMap)){
+    if(name.includes(kw))return FICHES_DB[key]||null;
+  }
+  // Try direct key match
+  for(const key of Object.keys(FICHES_DB)){
+    const normKey=key.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(name.includes(normKey)||normKey.includes(name))return FICHES_DB[key];
+  }
+  return null;
+}
+
 
 const ELIO_SYSTEM=`Tu es Elio, coach maths bienveillant qui prépare des élèves de 3e au brevet (DNB).
 TON : naturel, direct, motivant — grand frère qui s'y connaît. Jamais de jargon de prof. Tutoiement toujours.
@@ -1303,12 +1436,13 @@ Max 160 mots. Termine par "C'est bon ? On s'entraîne maintenant !" pour inviter
 
   const weakScores=weak.map(k=>`${themeNames[k]} (${scores[k]||0}%)`).join(', ');
   const difficulty=firstScore<30?1:firstScore<60?2:3;
+  const useQCM=['geo','stat'].includes(firstTheme);
   const exPrompt=`Génère UN exercice brevet de maths.
 Points faibles à travailler : ${weakScores}
 Chapitres étudiés : ${[...state.checkedChapters].join(', ')||'programme 3e'}
 Niveau cible : difficulté ${difficulty}/3 (${difficulty===1?'calcul direct':'raisonnement en '+(difficulty===2?'2':'3+')+' étapes'})
 
-Style brevet authentique — énoncé clair et précis, réponse unique.
+Style brevet authentique — énoncé clair et précis.
 Exemples par thème :
 - calcul: "Calcule 2³ × (1/4 + 3/4). Donne le résultat sous forme d'entier."
 - alg: "Résous l'équation 3(x-2) = x+8"
@@ -1316,10 +1450,12 @@ Exemples par thème :
 - fonc: "g est la fonction affine telle que g(0)=5 et g(2)=11. Donne l'expression de g(x)."
 - stat: "Dans une classe de 30 élèves, 18 ont eu plus de 10/20. Quelle est la fréquence en % ?"
 
+${useQCM?`Mode QCM : génère 4 propositions (A/B/C/D), une seule bonne réponse.
 Réponds UNIQUEMENT avec ce JSON :
-{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`;
+{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"lettre exacte ex: A","hint":"indice méthode en 10 mots max","choices":["A) valeur1","B) valeur2","C) valeur3","D) valeur4"]}`:`Réponds UNIQUEMENT avec ce JSON :
+{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`}`;
   try{
-    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,400);
+    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,500);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const ex=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
     state.currentExercise=ex;
@@ -1385,6 +1521,7 @@ function showFeedback(correct, title, text){
 function nextQuestion(){
   document.getElementById('feedback-overlay').classList.remove('show');
   document.getElementById('feedback-overlay').className='feedback-overlay';
+  hideQCM();
   if(state.phase==='diagnostic'){
     askDiagQuestion(state.diagIndex+1);
   } else if(state.phase==='explanation'){
@@ -1433,6 +1570,7 @@ async function logSession(exos, score){
 
 function showSessionEndScreen(exos, score, xpGained){
   logSession(exos, score);
+  hideQCM();
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
   document.getElementById('progress-top').style.display='none';
@@ -1457,11 +1595,70 @@ function endSession(){
 
 function exitSession(){
   state.phase='idle';
+  hideQCM();
   document.getElementById('progress-top').style.display='none';
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
   showSpeech('Session interrompue. Reviens quand tu veux ! 💪');
   switchScreen('home');
+}
+
+// ============================================
+// QCM
+// ============================================
+function showQCM(choices){
+  const area=document.getElementById('answer-area');
+  const qcm=document.getElementById('qcm-area');
+  area.style.display='none';
+  qcm.style.display='grid';
+  qcm.innerHTML='';
+  choices.forEach((choice,i)=>{
+    const btn=document.createElement('button');
+    btn.className='qcm-btn';
+    const letter=choice.match(/^([A-D])\)/)?choice.match(/^([A-D])\)/)[1]:'ABCD'[i];
+    const text=choice.replace(/^[A-D]\)\s*/,'');
+    btn.innerHTML=`<span class="qcm-letter">${letter}</span>${text}`;
+    btn.onclick=()=>submitQCMAnswer(letter,btn);
+    qcm.appendChild(btn);
+  });
+}
+
+function hideQCM(){
+  document.getElementById('answer-area').style.display='block';
+  const qcm=document.getElementById('qcm-area');
+  qcm.style.display='none';
+  qcm.innerHTML='';
+}
+
+async function submitQCMAnswer(letter,clickedBtn){
+  const ex=state.currentExercise;
+  if(!ex)return;
+  // Disable all buttons
+  document.querySelectorAll('.qcm-btn').forEach(b=>b.style.pointerEvents='none');
+  const correct=letter.toUpperCase()===ex.expected.toUpperCase().replace(/[^A-D]/g,'');
+  // Highlight selection
+  clickedBtn.style.background=correct?'rgba(52,211,153,0.3)':'rgba(255,92,106,0.3)';
+  clickedBtn.style.borderColor=correct?'#34d399':'#ff5c6a';
+  if(correct){
+    elioBounce();
+    state.sessionCorrect++;
+    addXP(10);
+    updateTopicScore(ex.topic,true);
+  } else {
+    elioShake();
+    updateTopicScore(ex.topic,false);
+    // Highlight the correct answer
+    document.querySelectorAll('.qcm-btn').forEach(b=>{
+      if(b.textContent.trim().startsWith(ex.expected)){
+        b.style.background='rgba(52,211,153,0.2)';
+        b.style.borderColor='#34d399';
+      }
+    });
+  }
+  state.sessionExos++;
+  state.totalExos++;
+  const feedback=correct?'':'La bonne réponse était '+ex.expected+'. '+ex.hint;
+  showFeedback(correct,correct?'Bonne réponse ! ✅':'Pas tout à fait ❌',feedback);
 }
 
 // ============================================
@@ -1516,6 +1713,8 @@ function buildCoursesList(){
 async function openFiche(chapter){
   document.getElementById('fiche-title').textContent=chapter.name;
   document.getElementById('fiche-overlay').classList.add('show');
+  const staticFiche=findFiche(chapter.name);
+  if(staticFiche){renderFiche(staticFiche,chapter.name);return;}
   document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading"><span class="fiche-loading-elio">⚔️</span><div>Elio prépare ta fiche...</div></div>`;
 
   const fichePrompt=`Tu es Elio. Génère une fiche de cours complète sur "${chapter.name}" pour un élève de ${state.studentLevel||'3e'}.
