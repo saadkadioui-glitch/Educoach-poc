@@ -196,6 +196,12 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .btn-send:hover{background:var(--gold-dark)}
 .btn-send:disabled{opacity:0.4;cursor:not-allowed}
 
+/* QCM */
+.qcm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 16px}
+.qcm-btn{background:rgba(255,255,255,0.08);border:2px solid rgba(245,200,66,0.3);border-radius:14px;padding:12px 10px;color:white;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;line-height:1.4;transition:all 0.2s}
+.qcm-btn:hover{background:rgba(245,200,66,0.15);border-color:var(--gold);transform:translateY(-1px)}
+.qcm-btn .qcm-letter{display:inline-block;background:var(--gold);color:#0F0A1E;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;margin-right:6px}
+
 /* FEEDBACK OVERLAY */
 .feedback-overlay{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;display:none}
 .feedback-overlay.show{display:flex}
@@ -611,6 +617,9 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
           <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
         </div>
       </div>
+
+      <!-- QCM area -->
+      <div class="qcm-grid" id="qcm-area" style="display:none"></div>
 
       <!-- Feedback overlay -->
       <div class="feedback-overlay" id="feedback-overlay">
@@ -1055,12 +1064,16 @@ function showSpeech(text, showExercise=null, continueCallback=null){
     document.getElementById('ex-stars').innerHTML=stars;
     continueEl.style.display='none';
     state.pendingContinue=null;
-    // Always enable input when exercise is shown
-    setTimeout(()=>{
-      document.getElementById('answer-input').disabled=false;
-      document.getElementById('btn-send').disabled=false;
-      document.getElementById('answer-input').focus();
-    },100);
+    if(showExercise.choices&&showExercise.choices.length){
+      showQCM(showExercise.choices);
+    } else {
+      hideQCM();
+      setTimeout(()=>{
+        document.getElementById('answer-input').disabled=false;
+        document.getElementById('btn-send').disabled=false;
+        document.getElementById('answer-input').focus();
+      },100);
+    }
   } else if(continueCallback){
     continueEl.style.display='flex';
     document.getElementById('answer-input').disabled=true;
@@ -1423,12 +1436,13 @@ Max 160 mots. Termine par "C'est bon ? On s'entraîne maintenant !" pour inviter
 
   const weakScores=weak.map(k=>`${themeNames[k]} (${scores[k]||0}%)`).join(', ');
   const difficulty=firstScore<30?1:firstScore<60?2:3;
+  const useQCM=['geo','stat'].includes(firstTheme);
   const exPrompt=`Génère UN exercice brevet de maths.
 Points faibles à travailler : ${weakScores}
 Chapitres étudiés : ${[...state.checkedChapters].join(', ')||'programme 3e'}
 Niveau cible : difficulté ${difficulty}/3 (${difficulty===1?'calcul direct':'raisonnement en '+(difficulty===2?'2':'3+')+' étapes'})
 
-Style brevet authentique — énoncé clair et précis, réponse unique.
+Style brevet authentique — énoncé clair et précis.
 Exemples par thème :
 - calcul: "Calcule 2³ × (1/4 + 3/4). Donne le résultat sous forme d'entier."
 - alg: "Résous l'équation 3(x-2) = x+8"
@@ -1436,10 +1450,12 @@ Exemples par thème :
 - fonc: "g est la fonction affine telle que g(0)=5 et g(2)=11. Donne l'expression de g(x)."
 - stat: "Dans une classe de 30 élèves, 18 ont eu plus de 10/20. Quelle est la fréquence en % ?"
 
+${useQCM?`Mode QCM : génère 4 propositions (A/B/C/D), une seule bonne réponse.
 Réponds UNIQUEMENT avec ce JSON :
-{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`;
+{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"lettre exacte ex: A","hint":"indice méthode en 10 mots max","choices":["A) valeur1","B) valeur2","C) valeur3","D) valeur4"]}`:`Réponds UNIQUEMENT avec ce JSON :
+{"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`}`;
   try{
-    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,400);
+    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,500);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const ex=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
     state.currentExercise=ex;
@@ -1505,6 +1521,7 @@ function showFeedback(correct, title, text){
 function nextQuestion(){
   document.getElementById('feedback-overlay').classList.remove('show');
   document.getElementById('feedback-overlay').className='feedback-overlay';
+  hideQCM();
   if(state.phase==='diagnostic'){
     askDiagQuestion(state.diagIndex+1);
   } else if(state.phase==='explanation'){
@@ -1553,6 +1570,7 @@ async function logSession(exos, score){
 
 function showSessionEndScreen(exos, score, xpGained){
   logSession(exos, score);
+  hideQCM();
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
   document.getElementById('progress-top').style.display='none';
@@ -1577,11 +1595,70 @@ function endSession(){
 
 function exitSession(){
   state.phase='idle';
+  hideQCM();
   document.getElementById('progress-top').style.display='none';
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
   showSpeech('Session interrompue. Reviens quand tu veux ! 💪');
   switchScreen('home');
+}
+
+// ============================================
+// QCM
+// ============================================
+function showQCM(choices){
+  const area=document.getElementById('answer-area');
+  const qcm=document.getElementById('qcm-area');
+  area.style.display='none';
+  qcm.style.display='grid';
+  qcm.innerHTML='';
+  choices.forEach((choice,i)=>{
+    const btn=document.createElement('button');
+    btn.className='qcm-btn';
+    const letter=choice.match(/^([A-D])\)/)?choice.match(/^([A-D])\)/)[1]:'ABCD'[i];
+    const text=choice.replace(/^[A-D]\)\s*/,'');
+    btn.innerHTML=`<span class="qcm-letter">${letter}</span>${text}`;
+    btn.onclick=()=>submitQCMAnswer(letter,btn);
+    qcm.appendChild(btn);
+  });
+}
+
+function hideQCM(){
+  document.getElementById('answer-area').style.display='block';
+  const qcm=document.getElementById('qcm-area');
+  qcm.style.display='none';
+  qcm.innerHTML='';
+}
+
+async function submitQCMAnswer(letter,clickedBtn){
+  const ex=state.currentExercise;
+  if(!ex)return;
+  // Disable all buttons
+  document.querySelectorAll('.qcm-btn').forEach(b=>b.style.pointerEvents='none');
+  const correct=letter.toUpperCase()===ex.expected.toUpperCase().replace(/[^A-D]/g,'');
+  // Highlight selection
+  clickedBtn.style.background=correct?'rgba(52,211,153,0.3)':'rgba(255,92,106,0.3)';
+  clickedBtn.style.borderColor=correct?'#34d399':'#ff5c6a';
+  if(correct){
+    elioBounce();
+    state.sessionCorrect++;
+    addXP(10);
+    updateTopicScore(ex.topic,true);
+  } else {
+    elioShake();
+    updateTopicScore(ex.topic,false);
+    // Highlight the correct answer
+    document.querySelectorAll('.qcm-btn').forEach(b=>{
+      if(b.textContent.trim().startsWith(ex.expected)){
+        b.style.background='rgba(52,211,153,0.2)';
+        b.style.borderColor='#34d399';
+      }
+    });
+  }
+  state.sessionExos++;
+  state.totalExos++;
+  const feedback=correct?'':'La bonne réponse était '+ex.expected+'. '+ex.hint;
+  showFeedback(correct,correct?'Bonne réponse ! ✅':'Pas tout à fait ❌',feedback);
 }
 
 // ============================================
