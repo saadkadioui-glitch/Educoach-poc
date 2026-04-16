@@ -180,7 +180,8 @@ async def invite_student(request: Request):
             return JSONResponse(status_code=400, content={"error": "parent_id requis"})
 
         invite_token = secrets.token_urlsafe(16)
-        invite_url = f"https://educoach-poc.vercel.app?invite={invite_token}&name={student_name}"
+        student_app_url = body.get("student_app_url", "https://educoach-poc.vercel.app")
+        invite_url = f"{student_app_url}?invite={invite_token}&name={student_name}"
 
         async with httpx.AsyncClient() as hc:
             # Create student record
