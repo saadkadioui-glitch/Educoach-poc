@@ -94,6 +94,38 @@ async def save_exercise(request: Request):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 # ============================================
+# STUDENT STATE — persist XP/scores/progress
+# ============================================
+@app.get("/api/state/{user_id}")
+async def get_state(user_id: str):
+    try:
+        async with httpx.AsyncClient() as hc:
+            r = await hc.get(
+                f"{SUPABASE_URL}/rest/v1/student_state?user_id=eq.{user_id}&select=*",
+                headers=supabase_headers()
+            )
+            rows = r.json() if r.status_code == 200 else []
+            return rows[0] if rows else {}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.post("/api/state/{user_id}")
+async def save_state(user_id: str, request: Request):
+    try:
+        body = await request.json()
+        body["user_id"] = user_id
+        body["updated_at"] = datetime.utcnow().isoformat()
+        async with httpx.AsyncClient() as hc:
+            await hc.post(
+                f"{SUPABASE_URL}/rest/v1/student_state",
+                headers={**supabase_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+                json=body
+            )
+        return {"status": "ok"}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+# ============================================
 # SESSION LOG
 # ============================================
 @app.post("/api/session/log")
