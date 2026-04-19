@@ -763,6 +763,8 @@ const state = {
   todayTheme: null,
   studentId: null,
   currentUserId: null,
+  lastSessionDate: null,
+  pendingContinue: null,
 };
 
 const LEVELS = [
@@ -1314,7 +1316,10 @@ Réponds UNIQUEMENT avec ce JSON sans texte avant/après :
   try{
     const resp=await callAPI([{role:'user',content:diagPrompt}],ELIO_SYSTEM,2500);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
-    const data=JSON.parse(clean);
+    const diagMatch=clean.match(/\{[\s\S]*\}/);
+    if(!diagMatch)throw new Error('No JSON in diag response');
+    const data=JSON.parse(diagMatch[0]);
+    if(!Array.isArray(data.questions)||data.questions.length===0)throw new Error('Invalid questions array');
     state.diagQuestions=data.questions;
     showSpeech(`Salut ${state.studentName} ! Je suis Elio ⚔️ On commence par 20 questions pour voir ton niveau. Pas de stress — c'est juste pour créer ton plan perso !`, null, ()=>askDiagQuestion(0));
   }catch(e){
@@ -1351,7 +1356,9 @@ Réponds UNIQUEMENT avec ce JSON :
   try{
     const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,200);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
-    const result=JSON.parse(clean);
+    const diagEvalMatch=clean.match(/\{[\s\S]*\}/);
+    if(!diagEvalMatch)throw new Error('No JSON in diag eval response');
+    const result=JSON.parse(diagEvalMatch[0]);
     const isCorrect=result.correct||result.partial>=0.7;
     const score=result.correct?1:(result.partial||0);
     const theme=normalizeTheme(q.theme);
@@ -1464,7 +1471,9 @@ Réponds UNIQUEMENT avec ce JSON :
   try{
     const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,500);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
-    const ex=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    const jsonMatch=clean.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('No JSON in response');
+    const ex=JSON.parse(jsonMatch[0]);
     state.currentExercise=ex;
     const n=state.sessionExos+1;
     document.getElementById('progress-fill').style.width=`${(n/10)*100}%`;
@@ -1491,7 +1500,9 @@ Réponds UNIQUEMENT avec ce JSON :
   try{
     const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,300);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
-    const result=JSON.parse(clean);
+    const evalMatch=clean.match(/\{[\s\S]*\}/);
+    if(!evalMatch)throw new Error('No JSON in eval response');
+    const result=JSON.parse(evalMatch[0]);
     if(result.correct){
       elioBounce();
       state.sessionCorrect++;
@@ -1635,6 +1646,9 @@ function hideQCM(){
   const qcm=document.getElementById('qcm-area');
   qcm.style.display='none';
   qcm.innerHTML='';
+  // Always reset text input state when leaving QCM
+  document.getElementById('answer-input').disabled=false;
+  document.getElementById('btn-send').disabled=false;
 }
 
 async function submitQCMAnswer(letter,clickedBtn){
@@ -1738,7 +1752,9 @@ Format ta réponse en JSON :
   try{
     const resp=await callAPI([{role:'user',content:fichePrompt}],ELIO_SYSTEM,800);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
-    const data=JSON.parse(clean.match(/\{[\s\S]*\}/)[0]);
+    const ficheMatch=clean.match(/\{[\s\S]*\}/);
+    if(!ficheMatch)throw new Error('No JSON in fiche response');
+    const data=JSON.parse(ficheMatch[0]);
     renderFiche(data,chapter.name);
   }catch(e){
     document.getElementById('fiche-content').innerHTML=`<div class="fiche-loading">Oups, problème technique 😅 Réessaie !</div>`;
@@ -1784,10 +1800,17 @@ function computeScores(){
   return{calcul:avg(state.diagScores.calcul),alg:avg(state.diagScores.alg),geo:avg(state.diagScores.geo),fonc:avg(state.diagScores.fonc),stat:avg(state.diagScores.stat)};
 }
 
-const tMap={'calcul':'calcul','algèbre':'alg','géométrie':'geo','statistiques':'stat','probabilités':'stat','fonctions':'fonc','calcul numérique':'calcul','algèbre':'alg'};
+const tMap={'calcul':'calcul','algebre':'alg','algebre':'alg','geo':'geo','geometrie':'geo','statistique':'stat','probabilite':'stat','probabilit':'stat','fonction':'fonc'};
 function updateTopicScore(topic,correct){
   if(!topic)return;
-  const k=Object.keys(tMap).find(t=>topic.toLowerCase().includes(t));
+  // Normalize: lowercase + strip accents
+  const norm=topic.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  // Check direct code first
+  if(state.scores[norm]!==undefined){
+    state.scores[norm]=correct?Math.min(100,(state.scores[norm]||0)+8):Math.max(0,(state.scores[norm]||0)-2);
+    return;
+  }
+  const k=Object.keys(tMap).find(t=>norm.includes(t));
   if(!k)return;
   const key=tMap[k];
   state.scores[key]=correct?Math.min(100,(state.scores[key]||0)+8):Math.max(0,(state.scores[key]||0)-2);
