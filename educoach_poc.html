@@ -187,7 +187,7 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .exercise-stars span{font-size:14px}
 
 /* ANSWER AREA */
-.answer-area{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:12px 16px;background:linear-gradient(0deg,rgba(10,5,32,0.98) 0%,transparent 100%)}
+.answer-area{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:6px 16px 12px;background:linear-gradient(0deg,rgba(10,5,32,0.98) 0%,transparent 100%)}
 .answer-input-row{display:flex;gap:8px;align-items:center}
 .answer-input{flex:1;background:rgba(255,255,255,0.1);border:2px solid rgba(245,200,66,0.4);border-radius:14px;padding:12px 16px;color:white;font-family:'Sora',sans-serif;font-size:14px;outline:none;transition:all 0.2s;backdrop-filter:blur(10px)}
 .answer-input:focus{border-color:var(--gold);background:rgba(255,255,255,0.15)}
@@ -195,6 +195,13 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .btn-send{background:var(--gold);color:#0F0A1E;border:none;border-radius:12px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;white-space:nowrap;transition:all 0.2s}
 .btn-send:hover{background:var(--gold-dark)}
 .btn-send:disabled{opacity:0.4;cursor:not-allowed}
+.btn-mathkb{background:rgba(255,255,255,0.1);border:2px solid rgba(245,200,66,0.3);border-radius:12px;padding:10px 11px;font-size:15px;color:rgba(255,255,255,0.8);cursor:pointer;transition:all 0.2s;line-height:1;flex-shrink:0}
+.btn-mathkb.active,.btn-mathkb:hover{background:rgba(245,200,66,0.2);border-color:var(--gold);color:var(--gold)}
+/* MATH KEYBOARD */
+.math-kb{display:none;flex-wrap:wrap;gap:6px;padding:8px 0 4px}
+.math-kb.open{display:flex}
+.math-sym{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 10px;font-size:16px;color:white;cursor:pointer;font-family:'JetBrains Mono',monospace;min-width:38px;text-align:center;transition:all 0.15s;user-select:none}
+.math-sym:hover,.math-sym:active{background:rgba(245,200,66,0.25);border-color:var(--gold);transform:scale(1.1)}
 
 /* QCM */
 .qcm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 16px}
@@ -612,7 +619,24 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 
       <!-- Answer area -->
       <div class="answer-area" id="answer-area">
+        <div class="math-kb" id="math-kb">
+          <button class="math-sym" onclick="insertSym('²')">²</button>
+          <button class="math-sym" onclick="insertSym('³')">³</button>
+          <button class="math-sym" onclick="insertSym('√')">√</button>
+          <button class="math-sym" onclick="insertSym('π')">π</button>
+          <button class="math-sym" onclick="insertSym('×')">×</button>
+          <button class="math-sym" onclick="insertSym('÷')">÷</button>
+          <button class="math-sym" onclick="insertSym('±')">±</button>
+          <button class="math-sym" onclick="insertSym('≈')">≈</button>
+          <button class="math-sym" onclick="insertSym('≤')">≤</button>
+          <button class="math-sym" onclick="insertSym('≥')">≥</button>
+          <button class="math-sym" onclick="insertSym('≠')">≠</button>
+          <button class="math-sym" onclick="insertSym('°')">°</button>
+          <button class="math-sym" onclick="insertSym('∠')">∠</button>
+          <button class="math-sym" onclick="insertSym('∞')">∞</button>
+        </div>
         <div class="answer-input-row">
+          <button class="btn-mathkb" id="btn-mathkb" onclick="toggleMathKB()" title="Symboles mathématiques">∑</button>
           <input type="text" class="answer-input" id="answer-input" placeholder="Ta réponse..." onkeydown="handleAnswerKey(event)" disabled/>
           <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
         </div>
@@ -1625,6 +1649,9 @@ function exitSession(){
 // QCM
 // ============================================
 function showQCM(choices){
+  // Close math keyboard when switching to QCM
+  document.getElementById('math-kb').classList.remove('open');
+  document.getElementById('btn-mathkb').classList.remove('active');
   const area=document.getElementById('answer-area');
   const qcm=document.getElementById('qcm-area');
   area.style.display='none';
@@ -1708,6 +1735,25 @@ async function submitAnswer(){
 }
 
 function handleAnswerKey(e){if(e.key==='Enter')submitAnswer()}
+
+function toggleMathKB(){
+  const kb=document.getElementById('math-kb');
+  const btn=document.getElementById('btn-mathkb');
+  const open=kb.classList.toggle('open');
+  btn.classList.toggle('active',open);
+}
+
+function insertSym(sym){
+  const input=document.getElementById('answer-input');
+  if(input.disabled)return;
+  const start=input.selectionStart;
+  const end=input.selectionEnd;
+  const val=input.value;
+  input.value=val.slice(0,start)+sym+val.slice(end);
+  const pos=start+sym.length;
+  input.setSelectionRange(pos,pos);
+  input.focus();
+}
 
 // ============================================
 // COURSES
