@@ -203,6 +203,23 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
 .math-sym{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:7px 10px;font-size:16px;color:white;cursor:pointer;font-family:'JetBrains Mono',monospace;min-width:38px;text-align:center;transition:all 0.15s;user-select:none}
 .math-sym:hover,.math-sym:active{background:rgba(245,200,66,0.25);border-color:var(--gold);transform:scale(1.1)}
 
+/* CAMERA BUTTON */
+.btn-camera{background:rgba(255,255,255,0.1);border:2px solid rgba(245,200,66,0.3);border-radius:12px;padding:10px 11px;font-size:15px;color:rgba(255,255,255,0.8);cursor:pointer;transition:all 0.2s;line-height:1;flex-shrink:0}
+.btn-camera:hover{background:rgba(245,200,66,0.2);border-color:var(--gold);color:var(--gold)}
+.btn-camera:disabled{opacity:0.25;cursor:not-allowed}
+
+/* PHOTO PREVIEW OVERLAY */
+.photo-overlay{position:absolute;inset:0;z-index:50;background:rgba(10,5,32,0.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.photo-overlay.show{display:flex}
+.photo-preview{width:100%;max-height:55vh;object-fit:contain;border-radius:16px;border:2px solid rgba(245,200,66,0.4)}
+.photo-overlay-label{font-size:13px;color:var(--muted);text-align:center}
+.photo-overlay-btns{display:flex;gap:12px;width:100%}
+.btn-retake{flex:1;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);border-radius:14px;padding:13px;color:white;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+.btn-photo-send{flex:2;background:var(--gold);border:none;border-radius:14px;padding:13px;color:#0F0A1E;font-family:'Sora',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+.photo-analyzing{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--gold);font-size:14px}
+.photo-spinner{width:36px;height:36px;border:3px solid rgba(245,200,66,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
 /* QCM */
 .qcm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 16px}
 .qcm-btn{background:rgba(255,255,255,0.08);border:2px solid rgba(245,200,66,0.3);border-radius:14px;padding:12px 10px;color:white;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;line-height:1.4;transition:all 0.2s}
@@ -638,7 +655,21 @@ html,body{height:100%;overflow:hidden;font-family:'Sora',sans-serif;background:v
         <div class="answer-input-row">
           <button class="btn-mathkb" id="btn-mathkb" onclick="toggleMathKB()" title="Symboles mathématiques">∑</button>
           <input type="text" class="answer-input" id="answer-input" placeholder="Ta réponse..." onkeydown="handleAnswerKey(event)" disabled/>
+          <button class="btn-camera" id="btn-camera" onclick="openCamera()" title="Photo de ma feuille" disabled>📷</button>
           <button class="btn-send" id="btn-send" onclick="submitAnswer()" disabled>Envoyer</button>
+        </div>
+      </div>
+
+      <!-- Camera file input (hidden) -->
+      <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoCapture(event)"/>
+
+      <!-- Photo preview overlay -->
+      <div class="photo-overlay" id="photo-overlay">
+        <div class="photo-overlay-label">📸 Vérifie que ta feuille est bien lisible</div>
+        <img class="photo-preview" id="photo-preview" src="" alt=""/>
+        <div class="photo-overlay-btns">
+          <button class="btn-retake" onclick="retakePhoto()">↩ Reprendre</button>
+          <button class="btn-photo-send" id="btn-photo-send" onclick="submitPhoto()">Envoyer à Elio →</button>
         </div>
       </div>
 
@@ -1092,8 +1123,11 @@ function showSpeech(text, showExercise=null, continueCallback=null){
     state.pendingContinue=null;
     if(showExercise.choices&&showExercise.choices.length){
       showQCM(showExercise.choices);
+      document.getElementById('btn-camera').disabled=true;
     } else {
       hideQCM();
+      const canPhoto=(showExercise.difficulty||1)>=2;
+      document.getElementById('btn-camera').disabled=!canPhoto;
       setTimeout(()=>{
         document.getElementById('answer-input').disabled=false;
         document.getElementById('btn-send').disabled=false;
@@ -1615,6 +1649,7 @@ function showSessionEndScreen(exos, score, xpGained){
   hideQCM();
   document.getElementById('answer-input').disabled=true;
   document.getElementById('btn-send').disabled=true;
+  document.getElementById('btn-camera').disabled=true;
   document.getElementById('progress-top').style.display='none';
   const lvl=getLevelData();
   const emoji=score>=80?'🏆':score>=60?'🎯':'⚔️';
@@ -1673,9 +1708,10 @@ function hideQCM(){
   const qcm=document.getElementById('qcm-area');
   qcm.style.display='none';
   qcm.innerHTML='';
-  // Always reset text input state when leaving QCM
   document.getElementById('answer-input').disabled=false;
   document.getElementById('btn-send').disabled=false;
+  document.getElementById('btn-camera').disabled=true;
+  document.getElementById('photo-overlay').classList.remove('show');
 }
 
 async function submitQCMAnswer(letter,clickedBtn){
@@ -1753,6 +1789,133 @@ function insertSym(sym){
   const pos=start+sym.length;
   input.setSelectionRange(pos,pos);
   input.focus();
+}
+
+// ============================================
+// CAMERA / PHOTO
+// ============================================
+let _pendingPhotoB64 = null;
+
+function openCamera(){
+  document.getElementById('camera-input').click();
+}
+
+function retakePhoto(){
+  _pendingPhotoB64 = null;
+  document.getElementById('photo-overlay').classList.remove('show');
+  document.getElementById('camera-input').value = '';
+}
+
+async function handlePhotoCapture(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  try{
+    const b64 = await compressImage(file, 900, 0.75);
+    _pendingPhotoB64 = b64;
+    document.getElementById('photo-preview').src = 'data:image/jpeg;base64,' + b64;
+    document.getElementById('photo-overlay').classList.add('show');
+  } catch(e){
+    console.error('Photo compression error:', e);
+  }
+}
+
+function compressImage(file, maxW, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl.split(',')[1]); // return base64 only
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submitPhoto(){
+  if(!_pendingPhotoB64 || !state.currentExercise) return;
+  const overlay = document.getElementById('photo-overlay');
+  // Show analyzing state
+  document.getElementById('btn-photo-send').disabled = true;
+  overlay.innerHTML = `<div class="photo-analyzing"><div class="photo-spinner"></div><div>Elio analyse ta feuille...</div></div>`;
+  try{
+    await processPhotoAnswer(_pendingPhotoB64);
+  } finally {
+    overlay.classList.remove('show');
+    // Restore overlay HTML for next use
+    overlay.innerHTML = `
+      <div class="photo-overlay-label">📸 Vérifie que ta feuille est bien lisible</div>
+      <img class="photo-preview" id="photo-preview" src="" alt=""/>
+      <div class="photo-overlay-btns">
+        <button class="btn-retake" onclick="retakePhoto()">↩ Reprendre</button>
+        <button class="btn-photo-send" id="btn-photo-send" onclick="submitPhoto()">Envoyer à Elio →</button>
+      </div>`;
+    _pendingPhotoB64 = null;
+    document.getElementById('camera-input').value = '';
+  }
+}
+
+async function processPhotoAnswer(b64){
+  const ex = state.currentExercise;
+  showTypingBubble();
+  const photoPrompt = `Tu es Elio, coach maths brevet. Analyse la copie manuscrite de l'élève.
+
+Exercice posé : ${ex.question}
+Réponse attendue : ${ex.expected}
+
+Regarde la photo et évalue :
+1. La démarche utilisée (correcte / incorrecte / incomplète)
+2. Les calculs intermédiaires
+3. La réponse finale
+
+Réponds UNIQUEMENT avec ce JSON :
+{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"analyse de la copie en 2-3 phrases : ce que tu vois, l'erreur précise si faux, la correction","encouragement":"1 phrase motivante"}`;
+
+  try{
+    const r = await fetch(`${BACKEND}/v1/messages`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens: 400,
+        system: ELIO_SYSTEM,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image', source:{type:'base64', media_type:'image/jpeg', data: b64}},
+            {type:'text', text: photoPrompt}
+          ]
+        }]
+      })
+    });
+    const d = await r.json();
+    const raw = d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
+    const m = raw.replace(/```json|```/g,'').trim().match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('No JSON');
+    const result = JSON.parse(m[0]);
+    if(result.correct){
+      elioBounce(); state.sessionCorrect++; addXP(15); // +5 bonus photo
+      updateTopicScore(ex.topic, true);
+    } else {
+      elioShake(); updateTopicScore(ex.topic, false);
+    }
+    state.sessionExos++; state.totalExos++;
+    const errLabel = {'CALCUL':'Erreur de calcul 🔢','MÉTHODE':'Mauvaise méthode 📐','CONCEPT':'Notion à revoir 📚','LECTURE':'Erreur de lecture 👀'};
+    const wrongTitle = result.error_type && errLabel[result.error_type] ? errLabel[result.error_type] : 'Pas tout à fait ❌';
+    showFeedback(result.correct, result.correct?'Bonne démarche ! ✅':wrongTitle, (result.feedback||'')+' '+(result.encouragement||''));
+  } catch(e){
+    state.sessionExos++; state.totalExos++;
+    showFeedback(false,'Problème technique 😅','Je n\'ai pas pu lire ta feuille. Réessaie ou tape ta réponse.');
+  }
 }
 
 // ============================================
