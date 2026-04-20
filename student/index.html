@@ -1175,7 +1175,7 @@ async function callAPI(messages, system, maxTokens=1000){
   const r=await fetch(`${BACKEND}/v1/messages`,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages})
+    body:JSON.stringify({model:'claude-sonnet-4-6-20251101',max_tokens:maxTokens,system,messages})
   });
   const d=await r.json();
   return d.content?.map(b=>b.type==='text'?b.text:'').join('')||'';
@@ -1318,19 +1318,19 @@ BREVET — ce qui compte :
 • Fonctions : tableau de valeurs, représentation graphique, lecture, fonctions affines/linéaires
 • Stats & Proba : moyenne, médiane, étendue, fréquences, probabilités simples/composées
 
-ÉQUIVALENCES MATHÉMATIQUES — toutes ces formes sont correctes pour la même valeur :
-• 1/2 = 0,5 = 50% = 0.5 (virgule ou point)
-• √2 ≈ 1,41 (arrondi à 2 décimales acceptable)
-• 3x+6 = 3(x+2) (forme développée = forme factorisée)
-• Résultat exact préféré à valeur approchée sauf si demandé
+ÉQUIVALENCES : 1/2=0,5=50%=0.5 | √2≈1,41 | forme développée=factorisée | arrondi ±0,01 ok.
+ERREURS : CALCUL(arithmétique) | MÉTHODE(mauvaise approche) | CONCEPT(notion incomprise) | LECTURE(énoncé mal lu)
+Réponses max 120 mots sauf JSON.`;
 
-TYPES D'ERREURS — quand un élève se trompe, identifie laquelle :
-• CALCUL : bonne méthode, erreur arithmétique (ex: 3×8=22 au lieu de 24)
-• MÉTHODE : mauvaise approche du problème (ex: additionne au lieu de multiplier)
-• CONCEPT : incompréhension de la notion (ex: confond périmètre et aire)
-• LECTURE : n'a pas bien lu l'énoncé
+// Minimal system prompt for answer evaluation — no curriculum, no tone guidance needed
+const ELIO_SYSTEM_EVAL=`Évaluateur de réponses mathématiques brevet (3e).
+ÉQUIVALENCES : 1/2=0,5=50%=0.5 | forme développée=factorisée | arrondi ±0,01 ok | vide/"je sais pas"→incorrect.
+ERREURS : CALCUL(arithmétique) | MÉTHODE(mauvaise approche) | CONCEPT(notion incomprise) | LECTURE(énoncé mal lu).
+Réponds toujours en JSON strict, sans texte autour.`;
 
-Réponses max 120 mots sauf quand format JSON demandé.`;
+// Minimal system prompt for course notes generation
+const ELIO_SYSTEM_FICHE=`Tu es Elio, coach maths pour élèves de 3e préparant le brevet.
+Génère des fiches de cours claires, concises, avec exemples résolus. JSON strict uniquement.`;
 
 
 // ============================================
@@ -1372,7 +1372,7 @@ Réponds UNIQUEMENT avec ce JSON sans texte avant/après :
   document.getElementById('speech-text').style.display='none';
 
   try{
-    const resp=await callAPI([{role:'user',content:diagPrompt}],ELIO_SYSTEM,2500);
+    const resp=await callAPI([{role:'user',content:diagPrompt}],ELIO_SYSTEM,1400);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const diagMatch=clean.match(/\{[\s\S]*\}/);
     if(!diagMatch)throw new Error('No JSON in diag response');
@@ -1406,13 +1406,10 @@ Question: ${q.question}
 Réponse attendue: ${q.expected}
 Réponse élève: ${answer}
 
-Règles d'équivalence : 1/2=0.5=0,5=50%, formes développée et factorisée équivalentes, arrondi à ±0,01 acceptable.
-Si la réponse est vide ou "je sais pas" → correct:false, partial:0.
-
 Réponds UNIQUEMENT avec ce JSON :
 {"correct":true/false,"partial":0.0,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","comment":"max 15 mots : ce qui était juste ou pourquoi c'est faux"}`;
   try{
-    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,200);
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM_EVAL,150);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const diagEvalMatch=clean.match(/\{[\s\S]*\}/);
     if(!diagEvalMatch)throw new Error('No JSON in diag eval response');
@@ -1449,7 +1446,7 @@ Résultats : Calcul ${scores.calcul}%, Algèbre ${scores.alg}%, Géométrie ${sc
 Présente les résultats brièvement et annonce le plan (thème le plus faible en premier). Max 120 mots. Ton naturel de grand frère.`;
   showTypingBubble();
   try{
-    const resp=await callAPI([{role:'user',content:planPrompt}],ELIO_SYSTEM,400);
+    const resp=await callAPI([{role:'user',content:planPrompt}],ELIO_SYSTEM,150);
     state.trainingPlan=scores;
     state.todayTheme=getWeakTheme();
     updateHomeScreen();
@@ -1499,7 +1496,7 @@ Fais une mini-leçon structurée en 3 parties EXACTEMENT :
 
 Max 160 mots. Termine par "C'est bon ? On s'entraîne maintenant !" pour inviter à continuer.`;
     try{
-      const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,500);
+      const resp=await callAPI([{role:'user',content:explainPrompt}],ELIO_SYSTEM,250);
       state.phase='explanation';
       showSpeech(resp, null, ()=>{state.phase='training';generateExercise();});
       return;
@@ -1527,7 +1524,7 @@ Réponds UNIQUEMENT avec ce JSON :
 {"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"lettre exacte ex: A","hint":"indice méthode en 10 mots max","choices":["A) valeur1","B) valeur2","C) valeur3","D) valeur4"]}`:`Réponds UNIQUEMENT avec ce JSON :
 {"topic":"nom précis du sujet","difficulty":${difficulty},"question":"énoncé complet","expected":"réponse exacte courte","hint":"indice méthode en 10 mots max"}`}`;
   try{
-    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,500);
+    const resp=await callAPI([{role:'user',content:exPrompt}],ELIO_SYSTEM,380);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const jsonMatch=clean.match(/\{[\s\S]*\}/);
     if(!jsonMatch)throw new Error('No JSON in response');
@@ -1550,13 +1547,10 @@ Question: ${state.currentExercise.question}
 Réponse attendue: ${state.currentExercise.expected}
 Réponse élève: ${answer}
 
-Règles d'équivalence : 1/2=0.5=0,5=50%, formes développée/factorisée équivalentes, arrondi ±0,01 acceptable.
-Si vide ou "je sais pas" → correct:false.
-
 Réponds UNIQUEMENT avec ce JSON :
-{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"si faux: explique l'erreur + méthode correcte en 1-2 phrases","encouragement":"1 phrase motivante adaptée au résultat"}`;
+{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"si faux: erreur précise + correction en 1-2 phrases","encouragement":"1 phrase motivante"}`;
   try{
-    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM,300);
+    const resp=await callAPI([{role:'user',content:evalPrompt}],ELIO_SYSTEM_EVAL,250);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const evalMatch=clean.match(/\{[\s\S]*\}/);
     if(!evalMatch)throw new Error('No JSON in eval response');
@@ -1869,25 +1863,21 @@ async function processPhotoAnswer(b64){
   showTypingBubble();
   const photoPrompt = `Tu es Elio, coach maths brevet. Analyse la copie manuscrite de l'élève.
 
-Exercice posé : ${ex.question}
+Exercice : ${ex.question}
 Réponse attendue : ${ex.expected}
 
-Regarde la photo et évalue :
-1. La démarche utilisée (correcte / incorrecte / incomplète)
-2. Les calculs intermédiaires
-3. La réponse finale
-
-Réponds UNIQUEMENT avec ce JSON :
-{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"analyse de la copie en 2-3 phrases : ce que tu vois, l'erreur précise si faux, la correction","encouragement":"1 phrase motivante"}`;
+Analyse la copie manuscrite (démarche, calculs intermédiaires, réponse finale).
+JSON :
+{"correct":true/false,"error_type":"CALCUL|MÉTHODE|CONCEPT|LECTURE|null","feedback":"ce que tu vois sur la copie, erreur précise si faux, correction en 2 phrases","encouragement":"1 phrase"}`;
 
   try{
     const r = await fetch(`${BACKEND}/v1/messages`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens: 400,
-        system: ELIO_SYSTEM,
+        model:'claude-sonnet-4-6-20251101',
+        max_tokens: 300,
+        system: ELIO_SYSTEM_EVAL,
         messages:[{
           role:'user',
           content:[
@@ -1959,7 +1949,7 @@ Format ta réponse en JSON :
 }`;
 
   try{
-    const resp=await callAPI([{role:'user',content:fichePrompt}],ELIO_SYSTEM,800);
+    const resp=await callAPI([{role:'user',content:fichePrompt}],ELIO_SYSTEM_FICHE,550);
     const clean=resp.replace(/```json|```/g,'').replace(/^\s*json\s*/i,'').trim();
     const ficheMatch=clean.match(/\{[\s\S]*\}/);
     if(!ficheMatch)throw new Error('No JSON in fiche response');
